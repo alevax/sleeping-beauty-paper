@@ -445,6 +445,129 @@ saveOMResultsWithThreshold <- function(Human_merge_om,
 #####################################################################################
 #####################################################################################
 
+run_analysis <- function(Su2c_EC_om,
+                         Su2c_WC_om,
+                         Beltran_om,
+                         Su2c_EC_gExpr,
+                         Su2c_WC_gExpr,
+                         Beltran_gExpr,
+                         gemm_pAct,
+                         Su2c_EC_pAct,
+                         Su2c_WC_pAct,
+                         Beltran_pAct,
+                         Su2c_EC_metadata,
+                         Su2c_WC_metadata,
+                         Beltran_metadata,
+                         gemm_metadata,
+                         reports_results_dir,
+                         om_threshold = 10){
+  # Clean Up WC Sample Names For Plotting
+  colnames(Su2c_WC_gExpr) = colnames(Su2c_WC_gExpr) %>%
+    stringr::str_replace_all("_2018", "") %>%
+    stringr::str_replace_all("\\.", "-")
+  colnames(Su2c_WC_pAct) = colnames(Su2c_WC_pAct) %>%
+    stringr::str_replace_all("_2018", "") %>%
+    stringr::str_replace_all("\\.", "-")
+  colnames(Su2c_WC_om) = colnames(Su2c_WC_om) %>%
+    stringr::str_replace_all("_2018", "") %>%
+    stringr::str_replace_all("\\.", "-")
+  
+  
+  # Range standardize the gExpr
+  Su2c_EC_gExpr["KLK3",] <- range_standardize(Su2c_EC_gExpr["KLK3",])
+  Su2c_EC_gExpr["SYP",] <- range_standardize(Su2c_EC_gExpr["SYP",])
+  Su2c_EC_gExpr["CHGA",] <- range_standardize(Su2c_EC_gExpr["CHGA",])
+  
+  Su2c_WC_gExpr["KLK3",] <- range_standardize(Su2c_WC_gExpr["KLK3",])
+  Su2c_WC_gExpr["SYP",] <- range_standardize(Su2c_WC_gExpr["SYP",])
+  Su2c_WC_gExpr["CHGA",] <- range_standardize(Su2c_WC_gExpr["CHGA",])
+  
+  Beltran_gExpr["KLK3",] <- range_standardize(Beltran_gExpr["KLK3",])
+  Beltran_gExpr["SYP",] <- range_standardize(Beltran_gExpr["SYP",])
+  Beltran_gExpr["CHGA",] <- range_standardize(Beltran_gExpr["CHGA",])
+  
+  
+  # Merge data together
+  Human_merge_gExpr <- Su2c_EC_gExpr %>%
+    mergeMatrices(Su2c_WC_gExpr) %>%
+    mergeMatrices(Beltran_gExpr)
+  Human_merge_pAct <- Su2c_EC_pAct %>%
+    mergeMatrices(Su2c_WC_pAct) %>%
+    mergeMatrices(Beltran_pAct)
+  Human_merge_om <- Su2c_EC_om %>%
+    mergeMatrices(Su2c_WC_om) %>%
+    mergeMatrices(Beltran_om)
+  Human_merge_metadata <- Su2c_EC_metadata %>%
+    dplyr::bind_rows(Su2c_WC_metadata) %>%
+    dplyr::bind_rows(Beltran_metadata)
+  Human_merge_metadata$Dataset <- c(rep("SU2C_East_Coast", nrow(Su2c_EC_metadata)),
+                                    rep("SU2C_West_Coast", nrow(Su2c_WC_metadata)),
+                                    rep("Beltran", nrow(Beltran_metadata)))
+  
+  
+  # Add GExpr and PAct to metadata
+  genes_to_plot <- c("KLK3", "SYP", "CHGA")
+  proteins_to_plot <- c("AR", "NSD2")
+  
+  for(i in 1:length(genes_to_plot)){
+    Human_merge_metadata <- addGeneToMetadataDF(Human_merge_metadata,
+                                                genes_to_plot[i],
+                                                Human_merge_gExpr)
+  }
+  for(i in 1:length(proteins_to_plot)){
+    Human_merge_metadata <- addProteinToMetadataDF(Human_merge_metadata,
+                                                   proteins_to_plot[i],
+                                                   Human_merge_pAct)
+  }
+  
+  
+  # Plot the Oncomatch Results
+  Human_merge_om_Beltran <- Human_merge_om[, Human_merge_metadata$Dataset == "Beltran"]
+  Human_merge_metadata_Beltran <- Human_merge_metadata[Human_merge_metadata$Dataset == "Beltran", ]
+  dir.create(paste0(reports_results_dir, "Beltran/"), showWarnings = FALSE)
+  saveOMResultsWithThreshold(Human_merge_om_Beltran,
+                             gemm_metadata,
+                             Human_merge_metadata_Beltran,
+                             out_dir = paste0(reports_results_dir, "Beltran/"),
+                             om_min_threshold = om_threshold,
+                             dataset = "Beltran")
+  
+  
+  # Plot the Oncomatch Results
+  Human_merge_om_SU2CEC <- Human_merge_om[, Human_merge_metadata$Dataset == "SU2C_East_Coast"]
+  Human_merge_metadata_SU2CEC <- Human_merge_metadata[Human_merge_metadata$Dataset == "SU2C_East_Coast", ]
+  dir.create(paste0(reports_results_dir, "SU2C_East_Coast/"), showWarnings = FALSE)
+  saveOMResultsWithThreshold(Human_merge_om = Human_merge_om_SU2CEC,
+                             gemm_metadata = gemm_metadata,
+                             Human_merge_metadata = Human_merge_metadata_SU2CEC,
+                             out_dir = paste0(reports_results_dir, "SU2C_East_Coast/"),
+                             om_min_threshold = om_threshold,
+                             dataset = "SU2C_East_Coast")
+  
+  # Plot the Oncomatch Results
+  Human_merge_om_SU2CWC <- Human_merge_om[, Human_merge_metadata$Dataset == "SU2C_West_Coast"]
+  Human_merge_metadata_SU2CWC <- Human_merge_metadata[Human_merge_metadata$Dataset == "SU2C_West_Coast", ]
+  dir.create(paste0(reports_results_dir, "SU2C_West_Coast/"), showWarnings = FALSE)
+  saveOMResultsWithThreshold(Human_merge_om_SU2CWC,
+                             gemm_metadata,
+                             Human_merge_metadata_SU2CWC,
+                             out_dir = paste0(reports_results_dir, "SU2C_West_Coast/"),
+                             om_min_threshold = om_threshold,
+                             dataset = "SU2C_West_Coast")
+  
+}
+
+# Load OncoMatch data (aREA)
+Su2c_EC_om <- readRDS("experiments/oncomatch-analysis/processed_data/oncomatch/SleepingBeauty_SU2CEastCoast_OncoMatch.rds")
+Su2c_WC_om <- readRDS("experiments/oncomatch-analysis/processed_data/oncomatch/SleepingBeauty_SU2CWestCoast_OncoMatch.rds")
+Beltran_om <- readRDS("experiments/oncomatch-analysis/processed_data/oncomatch/SleepingBeauty_Beltran_OncoMatch.rds")
+
+# Load OncoMatch data (GSEA)
+Su2c_EC_om_gsea <- readRDS("experiments/oncomatch-analysis/processed_data/oncomatch/SleepingBeauty_SU2CEastCoast_OncoMatch_gsea.rds")
+Su2c_WC_om_gsea <- readRDS("experiments/oncomatch-analysis/processed_data/oncomatch/SleepingBeauty_SU2CWestCoast_OncoMatch_gsea.rds")
+Beltran_om_gsea <- readRDS("experiments/oncomatch-analysis/processed_data/oncomatch/SleepingBeauty_Beltran_OncoMatch_gsea.rds")
+
+
 # Load gExpr data
 Su2c_EC_gExpr <- readRDS("experiments/oncomatch-analysis/processed_data/gexpr/SU2CEastCoast_gExpr_polyA_tpm.rds")
 Su2c_WC_gExpr <- readRDS("data/SU2C_WestCoast/SU2CWestCoast_merged_tpm_geneNames.rds")
@@ -456,108 +579,51 @@ Su2c_EC_pAct <- readRDS("experiments/oncomatch-analysis/processed_data/viper/SU2
 Su2c_WC_pAct <- readRDS("experiments/oncomatch-analysis/processed_data/viper/SU2CWestCoast_viper_zscore_SU2CNets.rds")
 Beltran_pAct <- readRDS("experiments/oncomatch-analysis/processed_data/viper/Beltran_viper_zscore_SU2CNets.rds")
 
-# Load OnCoMatch data
-Su2c_EC_om <- readRDS("experiments/oncomatch-analysis/processed_data/oncomatch/SleepingBeauty_SU2CEastCoast_OncoMatch.rds")
-Su2c_WC_om <- readRDS("experiments/oncomatch-analysis/processed_data/oncomatch/SleepingBeauty_SU2CWestCoast_OncoMatch.rds")
-Beltran_om <- readRDS("experiments/oncomatch-analysis/processed_data/oncomatch/SleepingBeauty_Beltran_OncoMatch.rds")
-
 # Load MetaData
 Su2c_EC_metadata <- readRDS("experiments/oncomatch-analysis/processed_data/metadata/SU2C_EastCoast_metadata_forOMPlot.rds")
 Su2c_WC_metadata <- readRDS("experiments/oncomatch-analysis/processed_data/metadata/SU2C_WestCoast_metadata_forOMPlot.rds")
 Beltran_metadata <- readRDS("experiments/oncomatch-analysis/processed_data/metadata/Beltran_metadata_forOMPlot.rds")
 gemm_metadata <- readRDS("experiments/oncomatch-analysis/processed_data/metadata/SleepingBeauty_metadata_forOMPlot.rds")
 
-
-# Clean Up WC Sample Names For Plotting
-colnames(Su2c_WC_gExpr) = colnames(Su2c_WC_gExpr) %>%
-  stringr::str_replace_all("_2018", "") %>%
-  stringr::str_replace_all("\\.", "-")
-colnames(Su2c_WC_pAct) = colnames(Su2c_WC_pAct) %>%
-  stringr::str_replace_all("_2018", "") %>%
-  stringr::str_replace_all("\\.", "-")
-colnames(Su2c_WC_om) = colnames(Su2c_WC_om) %>%
-  stringr::str_replace_all("_2018", "") %>%
-  stringr::str_replace_all("\\.", "-")
+reports_results_dir_aREA <- "experiments/oncomatch-analysis/reports/aREA/"
+dir.create(reports_results_dir_aREA)
+reports_results_dir_GSEA <- "experiments/oncomatch-analysis/reports/GSEA/"
+dir.create(reports_results_dir_GSEA)
 
 
-# Range standardize the gExpr
-Su2c_EC_gExpr["KLK3",] <- range_standardize(Su2c_EC_gExpr["KLK3",])
-Su2c_EC_gExpr["SYP",] <- range_standardize(Su2c_EC_gExpr["SYP",])
-Su2c_EC_gExpr["CHGA",] <- range_standardize(Su2c_EC_gExpr["CHGA",])
-
-Su2c_WC_gExpr["KLK3",] <- range_standardize(Su2c_WC_gExpr["KLK3",])
-Su2c_WC_gExpr["SYP",] <- range_standardize(Su2c_WC_gExpr["SYP",])
-Su2c_WC_gExpr["CHGA",] <- range_standardize(Su2c_WC_gExpr["CHGA",])
-
-Beltran_gExpr["KLK3",] <- range_standardize(Beltran_gExpr["KLK3",])
-Beltran_gExpr["SYP",] <- range_standardize(Beltran_gExpr["SYP",])
-Beltran_gExpr["CHGA",] <- range_standardize(Beltran_gExpr["CHGA",])
-
-
-# Merge data together
-Human_merge_gExpr <- Su2c_EC_gExpr %>%
-  mergeMatrices(Su2c_WC_gExpr) %>%
-  mergeMatrices(Beltran_gExpr)
-Human_merge_pAct <- Su2c_EC_pAct %>%
-  mergeMatrices(Su2c_WC_pAct) %>%
-  mergeMatrices(Beltran_pAct)
-Human_merge_om <- Su2c_EC_om %>%
-  mergeMatrices(Su2c_WC_om) %>%
-  mergeMatrices(Beltran_om)
-Human_merge_metadata <- Su2c_EC_metadata %>%
-  dplyr::bind_rows(Su2c_WC_metadata) %>%
-  dplyr::bind_rows(Beltran_metadata)
-Human_merge_metadata$Dataset <- c(rep("SU2C_East_Coast", nrow(Su2c_EC_metadata)),
-                                  rep("SU2C_West_Coast", nrow(Su2c_WC_metadata)),
-                                  rep("Beltran", nrow(Beltran_metadata)))
-
-
-# Add GExpr and PAct to metadata
-genes_to_plot <- c("KLK3", "SYP", "CHGA")
-proteins_to_plot <- c("AR", "NSD2")
-
-for(i in 1:length(genes_to_plot)){
-  Human_merge_metadata <- addGeneToMetadataDF(Human_merge_metadata,
-                                              genes_to_plot[i],
-                                              Human_merge_gExpr)
-}
-for(i in 1:length(proteins_to_plot)){
-  Human_merge_metadata <- addProteinToMetadataDF(Human_merge_metadata,
-                                                 proteins_to_plot[i],
-                                                 Human_merge_pAct)
-}
-
-
-# Plot the Oncomatch Results
-Human_merge_om_Beltran <- Human_merge_om[, Human_merge_metadata$Dataset == "Beltran"]
-Human_merge_metadata_Beltran <- Human_merge_metadata[Human_merge_metadata$Dataset == "Beltran", ]
-dir.create("experiments/oncomatch-analysis/reports/Beltran/", showWarnings = FALSE)
-saveOMResultsWithThreshold(Human_merge_om_Beltran,
-                           gemm_metadata,
-                           Human_merge_metadata_Beltran,
-                           out_dir = "experiments/oncomatch-analysis/reports/Beltran/",
-                           om_min_threshold = 5,
-                           dataset = "Beltran")
-
-
-# Plot the Oncomatch Results
-Human_merge_om_SU2CEC <- Human_merge_om[, Human_merge_metadata$Dataset == "SU2C_East_Coast"]
-Human_merge_metadata_SU2CEC <- Human_merge_metadata[Human_merge_metadata$Dataset == "SU2C_East_Coast", ]
-dir.create("experiments/oncomatch-analysis/reports/SU2C_East_Coast/", showWarnings = FALSE)
-saveOMResultsWithThreshold(Human_merge_om = Human_merge_om_SU2CEC,
-                           gemm_metadata = gemm_metadata,
-                           Human_merge_metadata = Human_merge_metadata_SU2CEC,
-                           out_dir = "experiments/oncomatch-analysis/reports/SU2C_East_Coast/",
-                           om_min_threshold = 5,
-                           dataset = "SU2C_East_Coast")
-
-# Plot the Oncomatch Results
-Human_merge_om_SU2CWC <- Human_merge_om[, Human_merge_metadata$Dataset == "SU2C_West_Coast"]
-Human_merge_metadata_SU2CWC <- Human_merge_metadata[Human_merge_metadata$Dataset == "SU2C_West_Coast", ]
-dir.create("experiments/oncomatch-analysis/reports/SU2C_West_Coast/", showWarnings = FALSE)
-saveOMResultsWithThreshold(Human_merge_om_SU2CWC,
-                           gemm_metadata,
-                           Human_merge_metadata_SU2CWC,
-                           out_dir = "experiments/oncomatch-analysis/reports/SU2C_West_Coast/",
-                           om_min_threshold = 5,
-                           dataset = "SU2C_West_Coast")
+run_analysis(
+  Su2c_EC_om,
+  Su2c_WC_om,
+  Beltran_om,
+  Su2c_EC_gExpr,
+  Su2c_WC_gExpr,
+  Beltran_gExpr,
+  gemm_pAct,
+  Su2c_EC_pAct,
+  Su2c_WC_pAct,
+  Beltran_pAct,
+  Su2c_EC_metadata,
+  Su2c_WC_metadata,
+  Beltran_metadata,
+  gemm_metadata,
+  reports_results_dir = reports_results_dir_aREA,
+  om_threshold = 10
+)
+run_analysis(
+  Su2c_EC_om_gsea,
+  Su2c_WC_om_gsea,
+  Beltran_om_gsea,
+  Su2c_EC_gExpr,
+  Su2c_WC_gExpr,
+  Beltran_gExpr,
+  gemm_pAct,
+  Su2c_EC_pAct,
+  Su2c_WC_pAct,
+  Beltran_pAct,
+  Su2c_EC_metadata,
+  Su2c_WC_metadata,
+  Beltran_metadata,
+  gemm_metadata,
+  reports_results_dir = reports_results_dir_GSEA,
+  om_threshold = 5
+)

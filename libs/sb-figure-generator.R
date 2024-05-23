@@ -839,8 +839,9 @@ saveVIPERMinusCISHeatmap <- function(df_annot_cols,
                                      nes_hm,
                                      dna_rep_color_fun,
                                      col_fun,
-                                     filter_NP) {
-  ht_list = df_annot_cols %v% df_annot_cols_beltran_only %v% nes_hm
+                                     filter_NP,
+                                     nes_known_hm) {
+  ht_list = df_annot_cols %v% df_annot_cols_beltran_only %v% nes_hm %v% nes_known_hm
   lgd_beltran_enrichment <- getBeltranEnrichmentLegend(dna_rep_color_fun)
   lgd_pas_enrichment <- getProteinActivityScoreEnrichmentLegend(col_fun)
   
@@ -852,7 +853,7 @@ saveVIPERMinusCISHeatmap <- function(df_annot_cols,
   
   pdf( paste0( "experiments/sb-figure-generator/reports/sb-viper-",
                ifelse(filter_NP, "noNP-", ""),
-               "heatmap.pdf") , width = 8 , height = 12 )
+               "heatmap.pdf") , width = 8 , height = 16 )
   print(p)
   dev.off()
 }
@@ -875,13 +876,22 @@ printVIPERHeatmapMinusCIS <- function(sb_data,
   selected_proteins <- getTopNProteinsFromStoufferSignature(mat)
   
   columns_dend <- getColumnsDendrogram(mat)
-  mat_known <- mat[ c("Ar","Ascl1","Foxa2","Foxm1","Cenpf") , ]
+  nepc_genes_to_plot <- c("Ar",
+                          "Foxa1",
+                          "Nkx3-1",
+                          "Foxa2",
+                          "Nr3c1",
+                          "Nsd2",
+                          "Foxm1",
+                          "Cenpf")
+  mat_known <- mat[ nepc_genes_to_plot , ]
   mat <- mat[selected_proteins,]
   
   if(filter_NP == TRUE){
     my_metadata <- my_metadata %>%
       filter(genotype == "NPp53")
     mat <- mat[, my_metadata$sample_id] #[, sb_data$metadata$genotype == "NPp53"]
+    mat_known <- mat_known[, my_metadata$sample_id]
     g_mat <- g_mat[, my_metadata$sample_id] #[, sb_data$metadata$genotype == "NPp53"]
     
     samples_to_remove <- sb_data$metadata$sample_id[sb_data$metadata$genotype=="NP"]
@@ -905,6 +915,7 @@ printVIPERHeatmapMinusCIS <- function(sb_data,
   
   # Get Heatmaps
   nes_hm <- getNESHeatmap(mat, columns_dend)
+  nes_known_hm <- getNESHeatmapWithKnownMarkers(mat_known, columns_dend)
   
   # Save VIPER-CIS Heatmap
   saveVIPERMinusCISHeatmap(
@@ -913,7 +924,8 @@ printVIPERHeatmapMinusCIS <- function(sb_data,
     nes_hm,
     dna_rep_color_fun,
     col_fun,
-    filter_NP
+    filter_NP,
+    nes_known_hm
   )
 }
 

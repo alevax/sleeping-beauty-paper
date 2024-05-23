@@ -27,6 +27,22 @@ suppressPackageStartupMessages(library(metap))
 # source("../vaxtools/R/cross-species-utils.R")
 # create_workspace("cis-integrative-analysis-usingNES_9_asThresholdForCINDyMRs-CINDyMergedSU2C+TCGA-gexFDR1em3")
 
+#####################################################################################
+#################################                   #################################
+#################################    FILE PATHS     #################################
+#################################                   ################################# 
+#####################################################################################
+filepath_cindy_table_su2c_plus_tcga_merged_rds <- "data/cindy-results/cindy-table-su2c-plus-tcga-merged.rds"
+filepath_NPp53_NEPC_effect_on_SB_activated_tibble_rds <- "experiments/all-samples-sb-rna-seq-analysis/reports/edgeR/NPp53_NEPC_effect_on_SB_activated/NPp53_NEPC_effect_on_SB_activated-tibble.rds"
+filepath_vpmat_rds <- "experiments/all-samples-sb-rna-seq-analysis/reports/vpmat.rds"
+filepath_cis_all_nr_prostate_0_001_csv <- "data/cis-results/cis_all-nr-prostate-0.001.csv"
+filepath_SB_List_CIS_and_RNAseq_2020_OCT_20_xlsx <- "data/mouse-analysis/SB List CIS and RNAseq_2020_OCT_20.xlsx"
+filepath_tfs_csv <- "data/regulators-lists/tfs.csv"
+filepath_cotfs_csv <- "data/regulators-lists/cotfs.csv"
+filepath_sig_csv <- "data/regulators-lists/sig.csv"
+filepath_ccle_tpm_symbols_rds <- "data/ccle-data/ccle-tpm-symbols.rds"
+filepath_Cell_lines_annotations_20181226_txt <- "data/ccle-data/Cell_lines_annotations_20181226.txt"
+
 source("libs/tools/cross_species_utils.R")
 source("libs/tools/utils.R")
 
@@ -164,8 +180,16 @@ integrateCindyTableAndCisTableIntoMyTibble <- function(my_tibble, cindy_table, c
   # length(setdiff( cis_table$mouse_gene_name , my_tibble$gene_name ))
   
   nes_threshold <- 9
-  up <- my_tibble %>% filter(gene %in% human_to_mouse(cindy_table$TF)) %>% slice_max(NEPC_viper_score,n=25) %>% dplyr::select(gene) %>% pull()
-  down <-  my_tibble %>% filter(gene %in% human_to_mouse(cindy_table$TF)) %>% slice_min(NEPC_viper_score,n=25) %>% dplyr::select(gene) %>% pull()
+  up <- my_tibble %>%
+    filter(gene %in% human_to_mouse(cindy_table$TF)) %>%
+    slice_max(NEPC_viper_score,n=25) %>%
+    dplyr::select(gene) %>%
+    pull()
+  down <-  my_tibble %>%
+    filter(gene %in% human_to_mouse(cindy_table$TF)) %>%
+    slice_min(NEPC_viper_score,n=25) %>%
+    dplyr::select(gene) %>%
+    pull()
   top_and_bottom_cmrs <- c(up,down)
   writexl::write_xlsx(my_tibble %>%
                         filter(gene %in% top_and_bottom_cmrs) %>%
@@ -183,18 +207,26 @@ integrateCindyTableAndCisTableIntoMyTibble <- function(my_tibble, cindy_table, c
   cindy_table.filtered <- cindy_table.filtered %>%
     group_by(Modulator) %>%
     dplyr::mutate(cindy_pvalue_integrated=metap::sumlog(pvalue)[["p"]])
+  # neg log pvalue addition due to overflow of p-values to 0
+  cindy_table.filtered <- cindy_table.filtered %>%
+    group_by(Modulator) %>%
+    dplyr::mutate(cindy_neg_log_pvalue_integrated=metap::sumlog(pvalue, log.p = TRUE)[["p"]]*-1)
   
-  cindy_table.filtered$TF.mouse <- human_to_mouse(cindy_table.filtered$TF,na.rm = FALSE)
+  cindy_table.filtered$TF.mouse <- human_to_mouse(cindy_table.filtered$TF, na.rm = FALSE)
   cindy_table.filtered <- left_join( cindy_table.filtered , 
                                      my_tibble %>% dplyr::select(gene,NEPC_viper_score) , by = c("TF.mouse"="gene") )
-  writexl::write_xlsx(cindy_table.filtered, file.path("experiments/integrative-analysis/reports/cindy-table-modulators-vs-tfs.xlsx") )
+  writexl::write_xlsx(cindy_table.filtered,
+                      file.path("experiments/integrative-analysis/reports/cindy-table-modulators-vs-tfs.xlsx") )
   
   print_msg_warn(">>> ** Using NES > abs(" , nes_threshold , ") for TFs as downstream effectors of Modulators")		
   print_msg_warn(">>> ** Using " , length(unique(cindy_table.filtered$TF)) , " TFs as downstream effectors of Modulators")		
   
   my_tibble <- left_join(my_tibble , 
-                         cindy_table.filtered %>% dplyr::distinct(Modulator.mouse,cindy_pvalue_integrated) , 
-                         by = c("gene"="Modulator.mouse") )
+                         cindy_table.filtered %>% dplyr::distinct(
+                           Modulator.mouse,
+                           cindy_pvalue_integrated,
+                           cindy_neg_log_pvalue_integrated
+                           ), by = c("gene"="Modulator.mouse") )
   
   x <- unique(cindy_table.filtered$Modulator) %>% human_to_mouse()
   my_tibble$is_candidate_modulator <- ifelse( is.na( x[ match( my_tibble$gene , x ) ] ) , "No" , "Yes" )
@@ -214,6 +246,7 @@ reformatMyTibbleToSaveNEPCSignatures <- function(my_tibble){
   my_tibble <- my_tibble %>% dplyr::select(gene,cis_fisher_pvalue,is_cis_gene,is_diff_expr,
                                            is_candidate_modulator,NEPC_viper_score,is_a_known_marker,
                                            is_c_mrs,gene_human,cindy_pvalue_integrated,
+                                           cindy_neg_log_pvalue_integrated,
                                            modulator_ranking,dge_FDR=FDR,dge_logFC=logFC)
   
   my_tibble <- my_tibble %>% arrange(cis_fisher_pvalue,is_cis_gene,is_diff_expr,modulator_ranking)
@@ -274,6 +307,7 @@ performFisherIntegration <- function(my_tibble){
   my_tibble$integration_viper_p <- ifelse( is.na(my_tibble$integration_viper_p) | is.nan(my_tibble$integration_viper_p) , 1 , my_tibble$integration_viper_p )
   my_tibble$integration_dge_p <- ifelse( is.na(my_tibble$integration_dge_p) | is.nan(my_tibble$integration_dge_p) , 1 , my_tibble$integration_dge_p )
   my_tibble$integration_cindy_p <- ifelse( is.na(my_tibble$integration_cindy_p) | is.nan(my_tibble$integration_cindy_p) , 1 , my_tibble$integration_cindy_p )
+  my_tibble$integration_cindy_neg_log_p <- ifelse( is.na(my_tibble$integration_cindy_p) | is.nan(my_tibble$integration_cindy_p) , 1 , my_tibble$cindy_neg_log_pvalue_integrated )
   
   my_mat <- my_tibble %>% 
     dplyr::select(integration_cis_p,integration_viper_p,integration_dge_p) %>%
@@ -290,6 +324,7 @@ performFisherIntegration <- function(my_tibble){
 }
 saveFisherIntegrationTableToExcel <- function(my_tibble){
   my_tibble$cindy_pvalue_integrated <- NULL
+  my_tibble$cindy_neg_log_pvalue_integrated <- NULL
   writexl::write_xlsx(my_tibble, file.path("experiments/integrative-analysis/reports/nepc-signatures-table-final-fisher-integration-table.xlsx") )
   write_tsv(my_tibble, file.path("experiments/integrative-analysis/reports/nepc-signatures-table-final-fisher-integration-table.tsv") )
   write_tsv(my_tibble, file.path("experiments/integrative-analysis/processed_data/nepc-signatures-table-final-fisher-integration-table.tsv") )
@@ -326,7 +361,8 @@ plot_log2_tpm <- function(my_tibble, ccle_prad.log2tpm){
   
   p <- draw(cis2validate_on_cell_lines_hm) # , heatmap_legend_side = "bottom" )
   
-  pdf( file.path( "experiments/integrative-analysis/reports/log2tpm-of-cis2validate-on-prostate-cancer-cell-lines.pdf")  , width = 4 , height = 8 )
+  pdf( file.path( "experiments/integrative-analysis/reports/log2tpm-of-cis2validate-on-prostate-cancer-cell-lines.pdf")  ,
+       width = 4 , height = 8 )
   print(p)
   dev.off() 
 }
@@ -450,26 +486,26 @@ print_msg_info(">>> Integrative Analysis")
 
 ## > Loading CINDy Table ----
 print_msg_info(">>> >> Loading CINDy Table")
-cindy_table <- readRDS("data/cindy-results/cindy-table-su2c-plus-tcga-merged.rds")
+cindy_table <- readRDS(filepath_cindy_table_su2c_plus_tcga_merged_rds)
 cindy_table <- preprocessCindyTable(cindy_table)
 
 ## > Loading Gene Expression and VIPER analysis ----
 print_msg_info(">>> >> Loading Gene Expression and VIPER analysis")
 # my_tibble <- readRDS("data/mouse-analysis/NPp53_NEPC_effect_on_SB_activated-tibble-manual-genes-curation.rds")
-my_tibble <- readRDS("experiments/all-samples-sb-rna-seq-analysis/reports/edgeR/NPp53_NEPC_effect_on_SB_activated/NPp53_NEPC_effect_on_SB_activated-tibble.rds")
+my_tibble <- readRDS(filepath_NPp53_NEPC_effect_on_SB_activated_tibble_rds)
 # my_tibble <- readRDS("experiments/all-samples-sb-rna-seq-analysis/reports/edgeR/NPp53_SB_effect_on_NEPC/NPp53_SB_effect_on_NEPC-tibble.rds")
-vpmat <- readRDS("experiments/all-samples-sb-rna-seq-analysis/reports/vpmat.rds")
+vpmat <- readRDS(filepath_vpmat_rds)
 # vpmat_old <- readRDS("data_old/mouse-analysis/vpmat.rds")
 my_tibble <- preprocessMyTibble(my_tibble, vpmat)
 
 ## > Gathering CIS-assiciated genes ----
 print_msg_info(">>> >> Gathering CIS-assiciated genes")
 print_msg_warn(">>> *** This List is not derived from NE-only samples ***")
-cis_table <- read_csv("data/cis-results/cis_all-nr-prostate-0.001.csv", skip = 1)
+cis_table <- read_csv(filepath_cis_all_nr_prostate_0_001_csv, skip = 1)
 cis_table <- preprocessCisTable(cis_table)
 ## > Gathering SB RNA-Seq Metadata ----
 print_msg_info(">>> >> > Gathering SB RNA-Seq Metadata")
-sb_excel <- readxl::read_xlsx("data/mouse-analysis/SB List CIS and RNAseq_2020_OCT_20.xlsx" , sheet = 2)
+sb_excel <- readxl::read_xlsx(filepath_SB_List_CIS_and_RNAseq_2020_OCT_20_xlsx, sheet = 2)
 sb_excel <- preprocessSbExcel(sb_excel)
 ## Separating rows by making a row for each Library and copying the rest of the columns
 saveCisTablePerLibrary(cis_table, sb_excel)
@@ -478,9 +514,9 @@ saveCisTablePerLibrary(cis_table, sb_excel)
 my_tibble <- integrateCindyTableAndCisTableIntoMyTibble(my_tibble, cindy_table, cis_table)
 
 ## > Saving Table to Excel ----
-tfs <- read_csv("data/regulators-lists/tfs.csv",col_names = F)
-cotfs <- read_csv("data/regulators-lists/cotfs.csv",col_names = F)
-sig <- read_csv("data/regulators-lists/sig.csv",col_names = F)
+tfs <- read_csv(filepath_tfs_csv,col_names = F)
+cotfs <- read_csv(filepath_cotfs_csv,col_names = F)
+sig <- read_csv(filepath_sig_csv,col_names = F)
 my_tibble <- reformatMyTibbleToSaveNEPCSignatures(my_tibble)
 saveNEPCSignaturesTables(my_tibble)
 my_tibble <- addRegulatorTypeColumnToMyTibble(my_tibble, tfs, cotfs, sig)
@@ -490,8 +526,8 @@ saveFisherIntegrationTableToExcel(my_tibble)
 
 ## > CIS on CCLE  ----
 print_msg_info(">>> >> CIS on CCLE")
-ccle.tpm <- readRDS("data/ccle-data/ccle-tpm-symbols.rds")
-ccle_annotations <- read_delim( file = "data/ccle-data/Cell_lines_annotations_20181226.txt" , delim = "\t" )
+ccle.tpm <- readRDS(filepath_ccle_tpm_symbols_rds)
+ccle_annotations <- read_delim( file = filepath_Cell_lines_annotations_20181226_txt, delim = "\t" )
 ccle_prad.log2tpm <- preprocessCCLE(ccle.tpm, ccle_annotations)
 plot_log2_tpm(my_tibble, ccle_prad.log2tpm)
 plot_scaled_log2_tpm(my_tibble, ccle_prad.log2tpm)

@@ -24,7 +24,7 @@
 #' @param ... Additional parameters to pass to plot function
 #' @return List of results and plot
 #' @export
-gsea <- function(signature, geneset, score=1, twoTails=FALSE, pout=TRUE, per=0, alternative=c("two.sided", "greater", "less"), colSig=c(.45, .15, .3, 1), colHit=c(.58, .05, .1, 2), ylim=NULL, axes=TRUE, xlab="Signature", ylab="ES", lwd=1, maxhit=0, ...) {
+gsea <- function(signature, geneset, score=1, twoTails=FALSE, pout=TRUE, per=0, nesnull=NULL, alternative=c("two.sided", "greater", "less"), colSig=c(.45, .15, .3, 1), colHit=c(.58, .05, .1, 2), ylim=NULL, axes=TRUE, xlab="Signature", ylab="ES", lwd=1, maxhit=0, ...) {
   alternative <- match.arg(alternative)
   if (is.null(names(geneset))) {
     tmp <- geneset
@@ -43,11 +43,13 @@ gsea <- function(signature, geneset, score=1, twoTails=FALSE, pout=TRUE, per=0, 
     else ledgesig <- rev(signature[1:pos])
     ledge <- ledgesig[names(ledgesig) %in% names(geneset)] 
     nes <- list(nes=NULL, p.value=NULL)
-    if (per>0) {
-      nesnull <- sapply(1:per, function(i, signature, setsize, score) {
-        es1 <- gsea.es(signature, sample(length(signature), setsize), score)
-        es1[which.max(abs(es1))]
-      }, signature=signature, setsize=length(which(names(signature) %in% names(geneset))), score=score)
+    if (per>0 || !is.null(nesnull)) {
+      if (is.null(nesnull)){
+        nesnull <- sapply(1:per, function(i, signature, setsize, score) {
+          es1 <- gsea.es(signature, sample(length(signature), setsize), score)
+          es1[which.max(abs(es1))]
+        }, signature=signature, setsize=length(which(names(signature) %in% names(geneset))), score=score)
+      }
       nes <- aecdf(nesnull, symmetric=TRUE)(es, alternative)
     }
     if (pout) {
@@ -83,11 +85,13 @@ gsea <- function(signature, geneset, score=1, twoTails=FALSE, pout=TRUE, per=0, 
       ledgesig <- signature[c(1:pos[1], pos[2]:length(signature))]
       ledge <- ledgesig[names(ledgesig) %in% names(geneset)] 
       nes <- list(nes=NULL, p.value=NULL)
-      if (per>0) {
-        nesnull <- sapply(1:per, function(i, signature, setsize, score) {
-          es1 <- -gsea.es(signature, sample(length(signature), setsize), score)
-          diff(range(es1))
-        }, signature=signature, setsize=length(which(names(signature) %in% names(geneset))), score=score)
+      if (per>0 || !is.null(nesnull)) {
+        if (is.null(nesnull)){
+          nesnull <- sapply(1:per, function(i, signature, setsize, score) {
+            es1 <- -gsea.es(signature, sample(length(signature), setsize), score)
+            diff(range(es1))
+          }, signature=signature, setsize=length(which(names(signature) %in% names(geneset))), score=score)
+        }
         nes <- aecdf(nesnull, symmetric=TRUE)(es, alternative)
       }
       if (pout) {
@@ -122,11 +126,13 @@ gsea <- function(signature, geneset, score=1, twoTails=FALSE, pout=TRUE, per=0, 
       else ledgesig <- rev(signature[pos:length(signature)])
       ledge <- ledgesig[names(ledgesig) %in% names(geneset)]
       nes <- list(nes=NULL, p.value=NULL)
-      if (per>0) {
-        nesnull <- sapply(1:per, function(i, signature, setsize, score) {
-          es1 <- -gsea.es(signature, sample(length(signature), setsize), score)
-          es1[which.max(abs(es1))]
-        }, signature=signature, setsize=length(which(names(signature) %in% names(geneset))), score=score)
+      if (per>0 || !is.null(nesnull)) {
+        if (is.null(nesnull)){
+          nesnull <- sapply(1:per, function(i, signature, setsize, score) {
+            es1 <- -gsea.es(signature, sample(length(signature), setsize), score)
+            es1[which.max(abs(es1))]
+          }, signature=signature, setsize=length(which(names(signature) %in% names(geneset))), score=score)
+        }
         nes <- aecdf(nesnull, symmetric=TRUE)(es, alternative)
       }
       if (pout) {
@@ -172,12 +178,15 @@ gsea <- function(signature, geneset, score=1, twoTails=FALSE, pout=TRUE, per=0, 
     #        ledgesig <- signature[c(1:max(which(names(signature) %in% names(ledge[ledge>0]))), min(which(names(signature) %in% names(ledge[ledge<0]))):length(signature))]
   }   
   nes <- list(nes=NULL, p.value=NULL)
-  if (per>0) {
-    nesnull <- sapply(1:per, function(i, signature, geneset, score) {
-      names(geneset) <- sample(names(signature), length(geneset))
-      es1 <- gsea2.es(signature, geneset, score)
-      es1$es[which.max(abs(es1$es))]
-    }, signature=signature, geneset=geneset, score=score)
+  
+  if (per>0 || !is.null(nesnull)) {
+    if (is.null(nesnull)){
+      nesnull <- sapply(1:per, function(i, signature, geneset, score) {
+        names(geneset) <- sample(names(signature), length(geneset))
+        es1 <- gsea2.es(signature, geneset, score)
+        es1$es[which.max(abs(es1$es))]
+      }, signature=signature, geneset=geneset, score=score)
+    }
     nes <- aecdf(nesnull, symmetric=TRUE)(es, alternative)
   }
   if (pout) {

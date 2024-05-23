@@ -1,3 +1,53 @@
+source("libs/tools/atools-gsea.R")
+
+## GSEA Functions
+# getGenesetFromReg <- function(reg){
+#   return(reg[["tfmode"]])
+# }
+# gsea_gsf <- function(geneset, signature, n_per){
+#   return(gsea(signature, geneset, pout = FALSE, per = n_per)$nes)
+# }
+# gseaList <- function(sample_signature, geneset_list, n_per){
+#   res_list <- lapply(X = geneset_list, FUN = gsea_gsf, signature = sample_signature, n_per = n_per)
+#   return(unlist(res_list))
+# }
+# gseaListMultisamps <- function(ges, geneset_list, n_per){
+#   return(apply(ges, 2, gseaList, geneset_list, n_per))
+# }
+# gseaWithRegulon <- function(ges, regulon, n_per = 500){
+#   geneset_list <- lapply(regulon, getGenesetFromReg)
+#   res <- gseaListMultisamps(ges, geneset_list, n_per)
+#   return(res)
+# }
+getGenesetFromReg <- function(reg){
+  return(reg[["tfmode"]])
+}
+gsea_gsf <- function(geneset, signature, n_per, nesnull = NULL){
+  return(gsea(signature, geneset, pout = FALSE, per = n_per, nesnull = nesnull)$nes)
+}
+getNESNullTwoTail <- function(signature, geneset, per, score = 1){
+  nesnull <- sapply(1:per, function(i, signature, geneset, score) {
+    names(geneset) <- sample(names(signature), length(geneset))
+    es1 <- gsea2.es(signature, geneset, score)
+    es1$es[which.max(abs(es1$es))]
+  }, signature=signature, geneset=geneset, score=score)
+  return(nesnull)
+}
+gseaList <- function(sample_signature, geneset_list, n_per){
+  nesnull <- getNESNullTwoTail(signature = sample_signature, geneset = geneset_list[[1]], per = n_per, score = 1)
+  res_list <- lapply(X = geneset_list, FUN = gsea_gsf, signature = sample_signature, n_per = n_per, nesnull = nesnull)
+  return(unlist(res_list))
+}
+gseaListMultisamps <- function(ges, geneset_list, n_per){
+  return(apply(ges, 2, gseaList, geneset_list, n_per))
+}
+gseaWithRegulon <- function(ges, regulon, n_per = 500){
+  geneset_list <- lapply(regulon, getGenesetFromReg)
+  res <- gseaListMultisamps(ges, geneset_list, n_per)
+  return(res)
+}
+
+
 ##
 # The OncoMatch Function
 # ----------------------
@@ -11,12 +61,16 @@ OncoMatch <- function( vpmat_to_test ,
                        om_min_threshold = FALSE , 
                        intersect_regs = TRUE ,
                        is_mht_correction = "bonferroni",
-                       is_return_best_and_worst_matches = FALSE )
+                       is_return_best_and_worst_matches = FALSE,
+                       enrichment = "area",
+                       n_per = 500,
+                       random_seed = 0)
 {
   require(crayon)
   require(tidyverse)
   require(viper)
   print_msg_info(">>> Running OncoMatch ...")
+  set.seed(random_seed)
   
   if (intersect_regs==TRUE)
   {
@@ -39,8 +93,30 @@ OncoMatch <- function( vpmat_to_test ,
   
   if (both_ways==TRUE)
   {
-    om_t <- aREA( vpmat_to_test , generateRegulonObjectFromProteinActivityMatrix(vpmat_for_cMRs,n_top = tcm_size/2 ,justWithOnes = T) , minsize = 0 )$nes 
-    om_q <- aREA( vpmat_for_cMRs , generateRegulonObjectFromProteinActivityMatrix(vpmat_to_test,n_top = tcm_size/2 ,justWithOnes = T) , minsize = 0 )$nes 
+    if (tolower(enrichment)=="area"){
+      om_t <- aREA( vpmat_to_test,
+                    generateRegulonObjectFromProteinActivityMatrix(vpmat_for_cMRs,
+                                                                   n_top = tcm_size/2,
+                                                                   justWithOnes = T),
+                    minsize = 0 )$nes 
+      om_q <- aREA( vpmat_for_cMRs,
+                    generateRegulonObjectFromProteinActivityMatrix(vpmat_to_test,
+                                                                   n_top = tcm_size/2,
+                                                                   justWithOnes = T),
+                    minsize = 0 )$nes
+    } else {
+      om_t <- gseaWithRegulon(vpmat_to_test,
+                              generateRegulonObjectFromProteinActivityMatrix(vpmat_for_cMRs,
+                                                                             n_top = tcm_size/2,
+                                                                             justWithOnes = T),
+                              n_per)
+      om_q <- gseaWithRegulon(vpmat_for_cMRs,
+                              generateRegulonObjectFromProteinActivityMatrix(vpmat_to_test,
+                                                                             n_top = tcm_size/2,
+                                                                             justWithOnes = T),
+                              n_per)
+    }
+    
     
     print_msg_warn("*** Found: " , sum(om_t>30) , " scores above NES=30. Saturating its thresholds ***" )
     om_t <- ifelse(om_t>30,30,om_t)
@@ -64,7 +140,19 @@ OncoMatch <- function( vpmat_to_test ,
     # om <- sapply( 1:ncol(vpmat_to_test) , function(i) { print_msg_info(">>> Running sample: " , i ) ; aREA( vpmat_to_test[,i] , generateRegulonObjectFromProteinActivityMatrix(vpmat_for_cMRs,n_top = tcm_size/2 ,justWithOnes = T) , minsize = 1 )$nes  } )
     # rownames(om) <- colnames(vpmat_for_cMRs)
     # colnames(om) <- colnames(vpmat_to_test)
-    om <- aREA( vpmat_to_test , generateRegulonObjectFromProteinActivityMatrix(vpmat_for_cMRs,n_top = tcm_size/2 ,justWithOnes = T) , minsize = 1 )$nes
+    if (tolower(enrichment)=="area"){
+      om <- aREA( vpmat_to_test,
+                  generateRegulonObjectFromProteinActivityMatrix(vpmat_for_cMRs,
+                                                                 n_top = tcm_size/2,
+                                                                 justWithOnes = T),
+                  minsize = 1 )$nes
+    } else {
+      om <- gseaWithRegulon( vpmat_to_test,
+                             generateRegulonObjectFromProteinActivityMatrix(vpmat_for_cMRs,
+                                                                            n_top = tcm_size/2,
+                                                                            justWithOnes = T),
+                             n_per)
+    }
     
     print_msg_warn("*** Found: " , sum( is.na(om) ) , " scores as NA. Setting them to ZERO ***")
     om[ is.na(om) ] <- 0

@@ -13,7 +13,6 @@ getSU2CEastCoastNEAnnotation <- function(){
   names(SU2CEastCoast_metadata_NE_feats) <- SU2CEastCoast_metadata$Sample_Identifier
   return(SU2CEastCoast_metadata_NE_feats)
 }
-
 getSU2CWestCoastNEAnnotation <- function(){
   SU2CWestCoast_metadata <- readRDS("experiments/oncomatch-analysis/processed_data/metadata/SU2C_WestCoast_metadata_forOMPlot.rds")
   SU2CWestCoast_metadata <- SU2CWestCoast_metadata %>%

@@ -20,8 +20,17 @@ suppressPackageStartupMessages(library(org.Mm.eg.db))
 suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(pheatmap))
 
+#####################################################################################
+#################################                   #################################
+#################################    FILE PATHS     #################################
+#################################                   ################################# 
+#####################################################################################
 
-
+filepath_SB_LIST_CIS_and_RNAseq_2020_OCT_20_xlsx = "data/mouse-analysis/SB List CIS and RNAseq_2020_OCT_20.xlsx"
+filepath_sb_rna_seq_samples_table_updated_Mar2022_xlsx = "data/pathology/sb-rna-seq-samples-table_updated_Mar2022.xlsx"
+filepath_raw_counts_all_mice_gene_symbols_kallisto_counts_rds = "data/sb-counts/raw-counts-all-mice-gene-symbols-kallisto-counts.rds"
+filepath_cis_all_nr_prostate_0_001_csv = "data/cis-results/cis_all-nr-prostate-0.001.csv"
+filepath_gemms_network_unPruned_rds = "data/sb-networks/gemms-network_unPruned.rds"
 
 # source("../vaxtools/R/utils.R")
 # source("../vaxtools/R/cross-species-utils.R")
@@ -29,6 +38,7 @@ source("libs/tools/utils.R")
 source("libs/tools/cross_species_utils.R")
 source("libs/tools/net-enrichment.R")
 source("libs/tools/gemms-pathway-analysis-aREA.R")
+
 # source("libs/tools/interactome_handler.R")
 
 # create_workspace(run_dir = "sb-gene-expression-analysis-with-n1-lists-interactome")
@@ -46,11 +56,11 @@ source("libs/tools/gemms-pathway-analysis-aREA.R")
 
 # ------------------------------------- HELPER FUNCTIONS ------------------------------------
 load_dataset_from_new_cohort_using_excel_file <- function(){
-  x <- readxl::read_excel("data/mouse-analysis/SB List CIS and RNAseq_2020_OCT_20.xlsx" , sheet = 5 , col_types = "text")
+  x <- readxl::read_excel(filepath_SB_LIST_CIS_and_RNAseq_2020_OCT_20_xlsx , sheet = 5 , col_types = "text")
   colnames(x) <- make.names(colnames(x))
   x <- x[ grepl("CMZ" , x$RNAseq.ID ) , ]
   
-  y <- readxl::read_excel("data/mouse-analysis/SB List CIS and RNAseq_2020_OCT_20.xlsx" , sheet = 4 , col_types = "text")
+  y <- readxl::read_excel(filepath_SB_LIST_CIS_and_RNAseq_2020_OCT_20_xlsx , sheet = 4 , col_types = "text")
   colnames(y) <- make.names(colnames(y))			
   y <- y[ grepl("CMZ" , y$RNAseq.ID ) , ]
   
@@ -78,7 +88,7 @@ load_dataset_from_new_cohort_using_excel_file <- function(){
   
 
   sb_all_rna_metadata_updatedpathology <-
-    readxl::read_xlsx("data/pathology/sb-rna-seq-samples-table_updated_Mar2022.xlsx")
+    readxl::read_xlsx(filepath_sb_rna_seq_samples_table_updated_Mar2022_xlsx)
   stopifnot(sb_all_rna_metadata_updatedpathology$sample_id == sb_all_rna_metadata$sample_id)
   sb_all_rna_metadata_updatedpathology$phenotype <- sb_all_rna_metadata_updatedpathology$phenotype %>%
     dplyr::recode("NEPC (Group 2)" = "NEPC", "non-NEPC (Group 1)" = "Adeno")
@@ -89,7 +99,7 @@ load_dataset_from_new_cohort_using_excel_file <- function(){
   
   
   
-  counts <- readRDS("data/sb-counts/raw-counts-all-mice-gene-symbols-kallisto-counts.rds")
+  counts <- readRDS(filepath_raw_counts_all_mice_gene_symbols_kallisto_counts_rds)
   str(counts,1)
   
   index <- colnames(counts) %in% sb_all_rna_metadata$sample_id
@@ -610,6 +620,11 @@ saveGeneExpressionHeatmap <- function(sb_data){
 # ------------------------------- VIPER ANALYSIS FUNCS ------------------------------
 # -----------------------------------------------------------------------------------
 # &-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&
+saveLargeMatToExcel <- function(mat, filename){
+  mat_xlsx <- data.frame(cbind(rownames(mat), mat))
+  colnames(mat_xlsx)[1] <- "rowname"
+  writexl::write_xlsx(mat_xlsx, filename, col_names = TRUE)
+}
 addVIPERAnalysisToSBData <- function(raw_counts, mouse_interactome, use_NP_as_reference = FALSE){
   require(edgeR)
   cpm_log <- cpm( raw_counts , log = TRUE )
@@ -620,6 +635,7 @@ addVIPERAnalysisToSBData <- function(raw_counts, mouse_interactome, use_NP_as_re
   # attr(sb_data$vpmat,"signature_method") <- "viper_mad"				
   
   ss_gesmat <- rankNorm(cpm_log)
+  saveLargeMatToExcel(ss_gesmat, "experiments/all-samples-sb-rna-seq-analysis/reports/sb_gesmat.xlsx")
   
   if(use_NP_as_reference){
     ss_vpsig <- viperSignature(eset = ss_gesmat, ref = ss_gesmat[, sb_data$metadata$genotype=="NP"])
@@ -627,6 +643,8 @@ addVIPERAnalysisToSBData <- function(raw_counts, mouse_interactome, use_NP_as_re
   } else {
     sb_vpmat <- viper( ss_gesmat , pruneRegulon(mouse_interactome,50) , method = "none" )
   }
+  saveLargeMatToExcel(sb_vpmat, "experiments/all-samples-sb-rna-seq-analysis/reports/sb_vpmat.xlsx")
+  
   sb_data$vpmat <- sb_vpmat
   attr(sb_data$vpmat,"pruneRegulon") <- "50"
   attr(sb_data$vpmat,"signature_method") <- "rankNorm"
@@ -640,14 +658,11 @@ addVIPERAnalysisToSBData <- function(raw_counts, mouse_interactome, use_NP_as_re
 # &-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&
 addPathwayAnalysisToSBData <- function(sb_data){
   # source("../vaxtools/R/pathway-analysis.R")
-  source("libs/tools/gemms-pathway-analysis-aREA.R")
   # sb_pathways <- do_pathways_with_aREA(sb_vpmat %>% mouse_to_human() , threshold = 1 )
   pathways_dir <- "experiments/all-samples-sb-rna-seq-analysis/reports/pathways/"
   dir.create(pathways_dir)
   sb_pathways <- do_pathways_with_aREA(sb_data$vpmat %>% mouse_to_human(), out_dir = pathways_dir)
   sb_data$pathways <- sb_pathways
-  
-  source("libs/tools/net-enrichment.R")
   sb_data$metadata$beltran_enrichment <- getNETenrichment( sb_data$vpmat %>% mouse_to_human() , 
                                                            regulonObject = beltran.net.regulon.obj )
   return(sb_data)
@@ -668,7 +683,7 @@ getVIPERMatrixFromMarina <- function(gesmat, gemms_interactome){
   for ( anEffect in colnames(gesmat) )
   {
     dir.create(paste0("experiments/all-samples-sb-rna-seq-analysis/reports/marina/", anEffect, "/"), showWarnings = FALSE)
-    ms <- msviper(gesmat[,anEffect], pruneRegulon(gemms_interactome,100) )
+    ms <- msviper(gesmat[,anEffect], pruneRegulon(gemms_interactome, 100) ) # PRUNE 100
     x <- sort(ms$es$nes)
     selected_mrs <- c(names(head(x,15)),names(tail(x,15))) %>% rev()
     pdf( file.path(paste0("experiments/all-samples-sb-rna-seq-analysis/reports/marina/", anEffect, "/"),
@@ -683,7 +698,7 @@ getVIPERMatrixFromMarina <- function(gesmat, gemms_interactome){
   }
   
   # vpmat <- viper( gesmat , pruneRegulon(gemms_interactome,50) , method = "none")
-  vpmat <- viper( gesmat , pruneRegulon(gemms_interactome,100) , method = "none")
+  vpmat <- viper( gesmat , pruneRegulon(gemms_interactome, 100) , method = "none") # PRUNE 100
   return(vpmat)
 }
 
@@ -693,7 +708,8 @@ addMarinaAnalysisToSBData <- function(sb_data, gesmat, gemms_interactome){
   require(viper)
   dir.create("experiments/all-samples-sb-rna-seq-analysis/reports/marina/", showWarnings = FALSE)
   vpmat <- getVIPERMatrixFromMarina(gesmat, gemms_interactome)
-  saveRDS( vpmat , file.path( "experiments/all-samples-sb-rna-seq-analysis/reports/vpmat.rds") )
+  saveRDS(vpmat, file.path( "experiments/all-samples-sb-rna-seq-analysis/reports/vpmat.rds") )
+  writexl::write_xlsx(data.frame(vpmat), "experiments/all-samples-sb-rna-seq-analysis/reports/vpmat_from_edgeR_signatures.xlsx")
   sb_data$vpmat_from_edgeR_signatures <- vpmat
   return(sb_data)
 }
@@ -742,7 +758,7 @@ known_nepc_markers <- c("Ezh2","Ascl1","Onecut2","Foxa2","Foxa1","Sox2","Ar","My
 ## Gathering CIS-assiciated genes ----
 print_msg_info(">>> Gathering CIS-assiciated genes")
 print_msg_warn(">>> *** This List is not derived from NE-only samples ***")
-cis_table <- read_csv("data/cis-results/cis_all-nr-prostate-0.001.csv", skip = 1)
+cis_table <- read_csv(filepath_cis_all_nr_prostate_0_001_csv, skip = 1)
 cis_table <- gatherCISAssociatedGenes(cis_table)
 cis_genes <- cis_table$mouse_gene_name
 sb_data$cis_table <- cis_table
@@ -757,7 +773,7 @@ print_msg_info(">>> Heatmap at Gene Expression Analysis with ComplexHeatmap")
 saveGeneExpressionHeatmap(sb_data)
 
 ## VIPER Analysis ----
-gemms_interactome <- readRDS("data/sb-networks/gemms-network_unPruned.rds")
+gemms_interactome <- readRDS(filepath_gemms_network_unPruned_rds)
 class(gemms_interactome) <- "regulon"
 print_msg_info(">>> Master Regulator Analysis with VIPER")
 sb_data <- addVIPERAnalysisToSBData(sb_data$raw_counts, gemms_interactome, use_NP_as_reference = FALSE)
