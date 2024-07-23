@@ -42,22 +42,26 @@ SleepingBeauty_gExpr_zscore <- filterOutNPSamples(SleepingBeauty_gExpr_zscore, S
 
 # Compute the VIPER
 SleepingBeauty_viper <- viper(SleepingBeauty_gExpr_zscore,
-                              list(SleepingBeauty_regulon, su2cEC_regulon, su2cWC_regulon),
+                              # list(SleepingBeauty_regulon, su2cEC_regulon, su2cWC_regulon),
+                              list(SleepingBeauty_regulon, su2cEC_regulon),
                               method = 'none',
                               eset.filter = FALSE,
                               mvws = 10)
 SU2CEastCoast_viper <- viper(SU2CEastCoast_gExpr_zscore,
-                             list(su2cEC_regulon, su2cWC_regulon),
+                             # list(su2cEC_regulon, su2cWC_regulon),
+                             su2cEC_regulon,
                              method = 'none',
                              eset.filter = FALSE,
                              mvws = 10)
 SU2CWestCoast_viper <- viper(SU2CWestCoast_gExpr_zscore,
-                             list(su2cEC_regulon, su2cWC_regulon),
+                             # list(su2cEC_regulon, su2cWC_regulon),
+                             su2cEC_regulon,
                              method = 'none',
                              eset.filter = FALSE,
                              mvws = 10)
 Beltran_viper <- viper(Beltran_gExpr_zscore,
-                       list(su2cEC_regulon, su2cWC_regulon),
+                       # list(su2cEC_regulon, su2cWC_regulon),
+                       su2cEC_regulon,
                        method = 'none',
                        eset.filter = FALSE,
                        mvws = 10)

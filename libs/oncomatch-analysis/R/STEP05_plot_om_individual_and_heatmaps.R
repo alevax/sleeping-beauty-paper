@@ -240,14 +240,18 @@ getDfAnnotCols <- function(df_annot_filtered, extra_annots = TRUE, dataset){
       title_gp = gpar(fontsize = 20, fontface = "bold"),
       labels_gp = gpar(fontsize = 20)
     ),
-    Tissue_Site = list(
-      title_gp = gpar(fontsize = 20, fontface = "bold"),
-      labels_gp = gpar(fontsize = 20)
-    ),
+    # Tissue_Site = if(extra_annots) {list(
+    #   title_gp = gpar(fontsize = 20, fontface = "bold"),
+    #   labels_gp = gpar(fontsize = 20)
+    # )} else {NULL},
     Neuroendocrine_Features = list(
       title_gp = gpar(fontsize = 20, fontface = "bold"),
       labels_gp = gpar(fontsize = 20)
     )#,
+    # Pathology_Classification = if(extra_annots) {list(
+    #   title_gp = gpar(fontsize = 20, fontface = "bold"),
+    #   labels_gp = gpar(fontsize = 20)
+    # )} else {NULL}#,
     # NEPC_Score = if(extra_annots) {list(
     #   title_gp = gpar(fontsize = 20, fontface = "bold"),
     #   labels_gp = gpar(fontsize = 20)
@@ -265,7 +269,8 @@ getDfAnnotCols <- function(df_annot_filtered, extra_annots = TRUE, dataset){
   df_annot_cols = HeatmapAnnotation(
     df = data.frame(dplyr::select(df_annot_filtered,
                                   "Dataset",
-                                  "Tissue_Site",
+                                  if(extra_annots) {"Tissue_Site"} else {NULL},
+                                  if(extra_annots) {"Pathology_Classification"} else {NULL},
                                   "Neuroendocrine_Features",
                                   if(dataset == "SU2C_East_Coast") {"NEPC_Score"} else {NULL},
                                   if(extra_annots) {"KLK3_gExpr"} else {NULL},
@@ -278,7 +283,8 @@ getDfAnnotCols <- function(df_annot_filtered, extra_annots = TRUE, dataset){
     simple_anno_size = unit(x = 15, units = "mm"),
     annotation_legend_param = my_annotation_legend_params,
     show_legend = c(TRUE,
-                    TRUE,
+                    if(extra_annots) {TRUE} else {NULL},
+                    if(extra_annots) {TRUE} else {NULL},
                     TRUE,
                     if(dataset == "SU2C_East_Coast") {TRUE} else {NULL},
                     if(extra_annots) {FALSE} else {NULL},
@@ -298,7 +304,7 @@ getMainHeatmap <- function(om,
   main_hm_binned <- Heatmap(om_binned$mat,
                             col = om_binned$colors,
                             cluster_rows =  FALSE,
-                            use_raster = TRUE ,
+                            use_raster = FALSE ,
                             name = "OncoMatch",
                             rect_gp = gpar(col = "white", lwd = 2),
                             left_annotation = df_annot_rows_left,
@@ -336,14 +342,20 @@ getHeatmapList <- function(Human_merge_om, gemm_metadata, Human_merge_metadata, 
     data.frame()
   
   # Use the ordered PlateSeq Metadata to compute the row annotations (on left of main heatmap)
-  gemm_df_annot_rows_left_Human_merge <- getDfAnnotRowsLeft(df_annot_rows = gemm_df_annot_rows_Human_merge)
+  gemm_df_annot_rows_left_Human_merge <- getDfAnnotRowsLeft(
+    df_annot_rows = gemm_df_annot_rows_Human_merge
+  )
   
   # Ensure the sample order in the SU2C Metadata match the column order of the OncoMatch Matrices
   Human_merge_metadata <- Human_merge_metadata %>%
     arrange(match(Sample_Identifier, colnames(Human_merge_om)))
   
   # Use the SU2C Metadata to compute the column annotations
-  Human_merge_df_annot_cols <- getDfAnnotCols(df_annot_filtered = Human_merge_metadata, extra_annots = TRUE, dataset)
+  Human_merge_df_annot_cols <- getDfAnnotCols(
+    df_annot_filtered = Human_merge_metadata,
+    extra_annots = TRUE,
+    dataset
+  )
   Human_merge_df_annot_cols_simpleAnnot <- getDfAnnotCols(df_annot_filtered = Human_merge_metadata, 
                                                           extra_annots = FALSE,
                                                           dataset)
@@ -392,7 +404,7 @@ drawHeatmapsLists <- function(res, out_dir, dataset){
             heatmap_legend_side = "bottom", 
             annotation_legend_side = "bottom")#,
   # png(paste0(out_dir, "SleepingBeautyOncoMatch_extraAnnotations.png"), width = 32, height = 14 , unit="in", res=300)
-  pdf(paste0(out_dir, "SleepingBeautyOncoMatch_extraAnnotations_", dataset, ".pdf"), width = 12, height = 14)
+  pdf(paste0(out_dir, "SleepingBeautyOncoMatch_extraAnnotations_", dataset, ".pdf"), width = 24, height = 14)
   print(p)
   dev.off()
   p <- draw(res[["ht_list_simpleAnnot"]],
@@ -586,9 +598,9 @@ Beltran_metadata <- readRDS("experiments/oncomatch-analysis/processed_data/metad
 gemm_metadata <- readRDS("experiments/oncomatch-analysis/processed_data/metadata/SleepingBeauty_metadata_forOMPlot.rds")
 
 reports_results_dir_aREA <- "experiments/oncomatch-analysis/reports/aREA/"
-dir.create(reports_results_dir_aREA)
+dir.create(reports_results_dir_aREA, showWarnings = FALSE)
 reports_results_dir_GSEA <- "experiments/oncomatch-analysis/reports/GSEA/"
-dir.create(reports_results_dir_GSEA)
+dir.create(reports_results_dir_GSEA, showWarnings = FALSE)
 
 
 run_analysis(

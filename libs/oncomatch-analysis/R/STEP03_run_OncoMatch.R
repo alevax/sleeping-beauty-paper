@@ -95,16 +95,32 @@ tcm_size <- 50
 cMRs_regulon <- generateRegulonObjectFromProteinActivityMatrix(vpmat_for_cMRs,
                                                              n_top = tcm_size/2,
                                                              justWithOnes = T)
+
+dir.create("experiments/oncomatch-analysis/reports/", showWarnings = FALSE)
+dir.create("experiments/oncomatch-analysis/reports/aREA/", showWarnings = FALSE)
+dir.create("experiments/oncomatch-analysis/reports/GSEA/", showWarnings = FALSE)
+
 set.seed(0)
-pdf("experiments/oncomatch-analysis/reports/aREA/CMZ103_WCMC0_6_N_aREA_51.8269.pdf")
-gsea( vpmat_to_test[,"CMZ103"], cMRs_regulon$WCMC0_6_N$tfmode, twoTails=TRUE, per = 0, pout = TRUE)
+pdf("experiments/oncomatch-analysis/reports/aREA/CMZ103_WCMC0_6_N_aREA_51.8269.pdf", width = 5, height = 4)
+gsea( vpmat_to_test[,"CMZ103"],
+      cMRs_regulon$WCMC0_6_N$tfmode,
+      twoTails=TRUE,
+      pout = TRUE,
+      per = 1000,
+      colSig = c(0.6, 1, 1, 0.85),
+      ylim=c(-1, 1),
+      lwd = 2)
 dev.off()
 
 set.seed(0)
-pdf("experiments/oncomatch-analysis/reports/aREA/CMZ181_WCMC4240_1_N_aREA_0.pdf")
-gsea( vpmat_to_test[,"CMZ181"], cMRs_regulon$WCMC4240_1_N$tfmode, twoTails=TRUE, per = 0, pout = TRUE)
+pdf("experiments/oncomatch-analysis/reports/aREA/CMZ181_WCMC4240_1_N_aREA_0.pdf", width = 5, height = 4)
+gsea( vpmat_to_test[,"CMZ181"],
+      cMRs_regulon$WCMC4240_1_N$tfmode,
+      twoTails=TRUE,
+      pout = TRUE,
+      per = 1000,
+      colSig = c(0.6, 1, 1, 0.85),
+      ylim=c(-1, 1),
+      lwd = 2)
 dev.off()
-
-
-
 

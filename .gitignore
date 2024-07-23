@@ -1,0 +1,11 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+experiments/
+old/
+sleeping-beauty-paper.Rproj
+.DS_Store
+data/.DS_Store
+data/cindy-results/.DS_Store
+data/mouse-analysis/.DS_Store

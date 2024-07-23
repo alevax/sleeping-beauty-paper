@@ -477,11 +477,12 @@ getNESHeatmap <- function(mat, columns_dend){
                      cluster_rows = FALSE,
                      cluster_columns = columns_dend,
                      name = "TF Activity",
-                     row_names_gp = gpar(fontsize = 8),
-                     column_names_gp = gpar(fontsize = 8),
+                     row_names_gp = gpar(fontsize = 10),
+                     column_names_gp = gpar(fontsize = 10),
                      row_title = "TF Activity", 
                      row_title_side = "left",
-                     row_title_gp = gpar(fontsize = 10, fontface = "bold")
+                     row_title_gp = gpar(fontsize = 12, fontface = "bold"),
+                     use_raster = FALSE
   )
   return(nes_hm)
 }
@@ -493,11 +494,12 @@ getNESHeatmapWithKnownMarkers <- function(mat_known, columns_dend){
                            cluster_rows = FALSE,
                            cluster_columns = columns_dend,
                            name = "TF Activity",  
-                           row_names_gp = gpar(fontsize = 8),
-                           column_names_gp = gpar(fontsize = 8),
+                           row_names_gp = gpar(fontsize = 10),
+                           column_names_gp = gpar(fontsize = 10),
                            row_title = "TF Activity", 
                            row_title_side = "left",
-                           row_title_gp = gpar(fontsize = 10, fontface = "bold")
+                           row_title_gp = gpar(fontsize = 12, fontface = "bold"),
+                           use_raster = FALSE
   )
   return(nes_known_hm)
 }
@@ -849,7 +851,9 @@ saveVIPERMinusCISHeatmap <- function(df_annot_cols,
   p <- draw(ht_list, column_km = 1 , 
             annotation_legend_list = pd ,
             heatmap_legend_side = "bottom", 
-            annotation_legend_side = "bottom" )
+            annotation_legend_side = "bottom"#,
+            #use_raster = FALSE
+            )
   
   pdf( paste0( "experiments/sb-figure-generator/reports/sb-viper-",
                ifelse(filter_NP, "noNP-", ""),
@@ -899,14 +903,17 @@ printVIPERHeatmapMinusCIS <- function(sb_data,
   }
   
   # Add RNA DNA Matched Samples To Metadata
-  rnaseq_samples_that_have_dnaseq_samples.table <-
-    getRNASeqSamplesThatHaveDNASeqSamples(cis_table.per_library, rna_seq_table)
+  rnaseq_samples_that_have_dnaseq_samples.table <- getRNASeqSamplesThatHaveDNASeqSamples(
+    cis_table.per_library,
+    rna_seq_table
+  )
   
-  my_metadata$rna_dna_matched_samples <- rnaseq_samples_that_have_dnaseq_samples.table[ match(my_metadata$sample_id,names(rnaseq_samples_that_have_dnaseq_samples.table)) ]
+  my_metadata$rna_dna_matched_samples <- rnaseq_samples_that_have_dnaseq_samples.table[ match(my_metadata$sample_id, names(rnaseq_samples_that_have_dnaseq_samples.table)) ]
   
   # Color Functions
   qPCR_color_fun =  colorRamp2( c(0.01,1,2,5,10,20,50,100,200,300) , viridis::viridis(10) )
-  dna_rep_color_fun = colorRamp2( seq(-5 , 5 , length.out = 10 ) , RColorBrewer::brewer.pal(10,"Spectral") %>% rev() )
+  dna_rep_color_fun = colorRamp2( seq(-5 , 5 , length.out = 10 ) ,
+                                  RColorBrewer::brewer.pal(10,"Spectral") %>% rev() )
   col_fun = colorRamp2(c(-3, 0, 3), c("deepskyblue3", "white", "brown3"))
   
   # DF Annot Cols

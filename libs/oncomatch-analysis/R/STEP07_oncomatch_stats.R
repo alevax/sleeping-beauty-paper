@@ -76,16 +76,16 @@ Su2c_EC_om_gsea <-
 
 
 reports_results_dir_aREA <- "experiments/oncomatch-analysis/reports/aREA/"
-dir.create(reports_results_dir_aREA)
+dir.create(reports_results_dir_aREA, showWarnings = FALSE)
 reports_results_dir_GSEA <- "experiments/oncomatch-analysis/reports/GSEA/"
-dir.create(reports_results_dir_GSEA)
+dir.create(reports_results_dir_GSEA, showWarnings = FALSE)
 
 run_analysis(
   Beltran_om,
   Su2c_EC_om,
   gemm_metadata,
   reports_results_dir_aREA,
-  om_threshold = 10,
+  om_threshold = 5,
   enrichment_method = 'aREA'
 )
 run_analysis(

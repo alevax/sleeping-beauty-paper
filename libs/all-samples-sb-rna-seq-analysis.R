@@ -621,7 +621,7 @@ saveGeneExpressionHeatmap <- function(sb_data){
 # -----------------------------------------------------------------------------------
 # &-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&
 saveLargeMatToExcel <- function(mat, filename){
-  mat_xlsx <- data.frame(cbind(rownames(mat), mat))
+  mat_xlsx <- cbind(rownames(mat), data.frame(round(mat, 2)))
   colnames(mat_xlsx)[1] <- "rowname"
   writexl::write_xlsx(mat_xlsx, filename, col_names = TRUE)
 }
