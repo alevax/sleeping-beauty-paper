@@ -741,13 +741,13 @@ dir.create(paste0(reports_dir, "all_CIS_genes_network_50MRs/"))
 dir.create(paste0(reports_dir, "sirt1_visualization_100MRs/"))
 dir.create(paste0(reports_dir, "sirt1_visualization_50MRs/"))
 dir.create(paste0(reports_dir, "sirt1_visualization_NEPCMarkers/"))
-dir.create(paste0(reports_dir, "hidden_labels/"))
-dir.create(paste0(reports_dir, "hidden_labels/sirt1_visualization_50MRs/"))
-dir.create(paste0(reports_dir, "hidden_labels/all_CIS_genes_network_50MRs/"))
+# dir.create(paste0(reports_dir, "hidden_labels/"))
+# dir.create(paste0(reports_dir, "hidden_labels/sirt1_visualization_50MRs/"))
+# dir.create(paste0(reports_dir, "hidden_labels/all_CIS_genes_network_50MRs/"))
 
 
-all_CIS_genes_visualization_100MRs <- getAllCISGenesVisualization(my_table, cindy_table, n_mrs = 100)
-saveRDS(all_CIS_genes_visualization_100MRs, "data/all_CIS_genes_visualization_100MRs.rds")
+# all_CIS_genes_visualization_100MRs <- getAllCISGenesVisualization(my_table, cindy_table, n_mrs = 100)
+# saveRDS(all_CIS_genes_visualization_100MRs, "data/all_CIS_genes_visualization_100MRs.rds")
 
 # # Define UI for application that draws a histogram
 # ui <- fluidPage(
@@ -768,7 +768,7 @@ saveRDS(all_CIS_genes_visualization_100MRs, "data/all_CIS_genes_visualization_10
 # shinyApp(ui = ui, server = server)
 
 
-
+all_CIS_genes_visualization_100MRs <- getAllCISGenesVisualization(my_table, cindy_table, n_mrs = 100)
 all_CIS_genes_visualization_50MRs <- getAllCISGenesVisualization(my_table, cindy_table, n_mrs = 50)
 sirt1_visualization_100MRs <- getSIRT1NetworkVisualization(my_table, cindy_table, n_mrs = 100)
 sirt1_visualization_50MRs <- getSIRT1NetworkVisualization(my_table, cindy_table, n_mrs = 50)
@@ -808,10 +808,10 @@ visSave(sirt1_visualization_NEPCMarkers,
 
 
 
-visSave(all_CIS_genes_visualization_50MRs_hiddenLabels,
-        file = paste0(reports_dir, "hidden_labels/all_CIS_genes_network_50MRs/all_CIS_genes_network_50MRs_hiddenLabels.html"))
-visSave(sirt1_visualization_50MRs_hiddenLabels,
-        file = paste0(reports_dir, "hidden_labels/sirt1_visualization_50MRs/sirt1_visualization_50MRs_hiddenLabels.html"))
+# visSave(all_CIS_genes_visualization_50MRs_hiddenLabels,
+#         file = paste0(reports_dir, "hidden_labels/all_CIS_genes_network_50MRs/all_CIS_genes_network_50MRs_hiddenLabels.html"))
+# visSave(sirt1_visualization_50MRs_hiddenLabels,
+#         file = paste0(reports_dir, "hidden_labels/sirt1_visualization_50MRs/sirt1_visualization_50MRs_hiddenLabels.html"))
 
 # Hide NSD2 label
 

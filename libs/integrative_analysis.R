@@ -34,6 +34,7 @@ suppressPackageStartupMessages(library(metap))
 #####################################################################################
 filepath_cindy_table_su2c_plus_tcga_merged_rds <- "data/cindy-results/cindy-table-su2c-plus-tcga-merged.rds"
 filepath_NPp53_NEPC_effect_on_SB_activated_tibble_rds <- "experiments/all-samples-sb-rna-seq-analysis/reports/edgeR/NPp53_NEPC_effect_on_SB_activated/NPp53_NEPC_effect_on_SB_activated-tibble.rds"
+# filepath_NPp53_SB_effect_on_NEPC_tibble_rds <- "experiments/all-samples-sb-rna-seq-analysis/reports/edgeR/NPp53_SB_effect_on_NEPC/NPp53_SB_effect_on_NEPC-tibble.rds"
 filepath_vpmat_rds <- "experiments/all-samples-sb-rna-seq-analysis/reports/vpmat.rds"
 filepath_cis_all_nr_prostate_0_001_csv <- "data/cis-results/cis_all-nr-prostate-0.001.csv"
 filepath_SB_List_CIS_and_RNAseq_2020_OCT_20_xlsx <- "data/mouse-analysis/SB List CIS and RNAseq_2020_OCT_20.xlsx"
@@ -67,9 +68,11 @@ preprocessMyTibble <- function(my_tibble, vpmat){
   my_tibble$is_diff_expr <- ifelse( my_tibble$FDR < 1e-3 , "Yes" , "No" )	
   
   x <- vpmat[,"NPp53_NEPC_effect_on_SB_activated"]
+  # x <- vpmat[,"NPp53_SB_effect_on_NEPC"]
   my_tibble$NEPC_viper_score <- x[ match( my_tibble$gene , names(x) ) ]		
   
   mrs_candidates <- names(vpmat[,"NPp53_NEPC_effect_on_SB_activated"])[ vpmat[,"NPp53_NEPC_effect_on_SB_activated"] > 2 ]
+  # mrs_candidates <- names(vpmat[,"NPp53_SB_effect_on_NEPC"])[ vpmat[,"NPp53_SB_effect_on_NEPC"] > 2 ]
   mrs_candidates.human <- mrs_candidates %>% mouse_to_human()	# Never used below	
   return(my_tibble)
 }
@@ -243,11 +246,21 @@ integrateCindyTableAndCisTableIntoMyTibble <- function(my_tibble, cindy_table, c
 # -------------------------------------------------------------------------------------------
 # &-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&
 reformatMyTibbleToSaveNEPCSignatures <- function(my_tibble){
-  my_tibble <- my_tibble %>% dplyr::select(gene,cis_fisher_pvalue,is_cis_gene,is_diff_expr,
-                                           is_candidate_modulator,NEPC_viper_score,is_a_known_marker,
-                                           is_c_mrs,gene_human,cindy_pvalue_integrated,
-                                           cindy_neg_log_pvalue_integrated,
-                                           modulator_ranking,dge_FDR=FDR,dge_logFC=logFC)
+  my_tibble <- my_tibble %>% dplyr::select(
+    gene,
+    cis_fisher_pvalue,
+    is_cis_gene,
+    is_diff_expr,
+    is_candidate_modulator,
+    NEPC_viper_score,
+    is_a_known_marker,
+    is_c_mrs,gene_human,
+    cindy_pvalue_integrated,
+    cindy_neg_log_pvalue_integrated,
+    modulator_ranking,
+    dge_FDR=FDR,
+    dge_logFC=logFC
+  )
   
   my_tibble <- my_tibble %>% arrange(cis_fisher_pvalue,is_cis_gene,is_diff_expr,modulator_ranking)
   
@@ -488,12 +501,14 @@ print_msg_info(">>> Integrative Analysis")
 print_msg_info(">>> >> Loading CINDy Table")
 cindy_table <- readRDS(filepath_cindy_table_su2c_plus_tcga_merged_rds)
 cindy_table <- preprocessCindyTable(cindy_table)
+cindy_min_p <- min(cindy_table$pvalue[cindy_table$pvalue!=0])
+cindy_table$pvalue[cindy_table$pvalue==0] <- cindy_min_p
 
 ## > Loading Gene Expression and VIPER analysis ----
 print_msg_info(">>> >> Loading Gene Expression and VIPER analysis")
 # my_tibble <- readRDS("data/mouse-analysis/NPp53_NEPC_effect_on_SB_activated-tibble-manual-genes-curation.rds")
 my_tibble <- readRDS(filepath_NPp53_NEPC_effect_on_SB_activated_tibble_rds)
-# my_tibble <- readRDS("experiments/all-samples-sb-rna-seq-analysis/reports/edgeR/NPp53_SB_effect_on_NEPC/NPp53_SB_effect_on_NEPC-tibble.rds")
+# my_tibble <- readRDS(filepath_NPp53_SB_effect_on_NEPC_tibble_rds)
 vpmat <- readRDS(filepath_vpmat_rds)
 # vpmat_old <- readRDS("data_old/mouse-analysis/vpmat.rds")
 my_tibble <- preprocessMyTibble(my_tibble, vpmat)
@@ -512,6 +527,8 @@ saveCisTablePerLibrary(cis_table, sb_excel)
 
 ## > Integrating DATA ----
 my_tibble <- integrateCindyTableAndCisTableIntoMyTibble(my_tibble, cindy_table, cis_table)
+min_pval <- min(my_tibble[!is.na(my_tibble$cindy_pvalue_integrated) & my_tibble$cindy_pvalue_integrated!=0,]$cindy_pvalue_integrated)
+my_tibble[!is.na(my_tibble$cindy_pvalue_integrated) & my_tibble$cindy_pvalue_integrated==0,]$cindy_pvalue_integrated = min_pval
 
 ## > Saving Table to Excel ----
 tfs <- read_csv(filepath_tfs_csv,col_names = F)

@@ -26,7 +26,7 @@ source("libs/tools/atools-gsea.R")
 #####################################################################################
 #####################################################################################
 
-getColumnsDendrogram <- function(mat){
+getColumnsDendrogram_k2 <- function(mat){
   my_hclust <- hclust(d = as.dist(1-cor(mat)),method = "ward.D2")
   columns_dend = as.dendrogram(my_hclust)
   columns_dend = color_branches(columns_dend, k = 2) 		
@@ -157,7 +157,7 @@ getPathwaysHeatmapsList <- function(sb_data, filter_NP=TRUE){
     mat <- mat[, sb_data$metadata$genotype == "NPp53"]
   }
   
-  columns_dend <- getColumnsDendrogram(mat)
+  columns_dend <- getColumnsDendrogram_k2(mat)
   col_fun = colorRamp2( seq(-10 , 10 , length.out = 10 ) , RColorBrewer::brewer.pal(10,"Spectral") %>% rev() )
   
   hallmarks_hm <- getHallmarksHeatmap(mat, col_fun, columns_dend)
@@ -396,7 +396,7 @@ getTopNProteinsFromStoufferSignature <- function(mat, n_top = 15){
   selected_proteins <- Reduce( union , apply( mat.stouffered , 2 , function(x) { x <- sort(x,decreasing = T) ; names(c(head(x,n_top))) } ) )
   return(selected_proteins)
 }
-getColumnsDendrogram <- function(mat){
+getColumnsDendrogram_k3 <- function(mat){
   my_hclust <- hclust(d = as.dist(1-cor(mat,method = "spe")),method = "ward.D2")
   columns_dend = as.dendrogram(my_hclust)
   columns_dend = color_branches(columns_dend, k = 3)
@@ -646,7 +646,7 @@ printVIPERHeatmapPlusCIS <- function(sb_data,
     g_mat <- g_mat[, sb_data$metadata$genotype == "NPp53"]
   }
   
-  columns_dend <- getColumnsDendrogram(mat)
+  columns_dend <- getColumnsDendrogram_k3(mat)
   mat_known <- mat[ c("Ar","Ascl1","Foxa2","Foxm1","Cenpf") , ]
   mat <- mat[selected_proteins,]
   
@@ -879,7 +879,7 @@ printVIPERHeatmapMinusCIS <- function(sb_data,
   mat <- getMatWithOnlyTFAndCoTF(mat, sig_list)
   selected_proteins <- getTopNProteinsFromStoufferSignature(mat)
   
-  columns_dend <- getColumnsDendrogram(mat)
+  columns_dend <- getColumnsDendrogram_k3(mat)
   nepc_genes_to_plot <- c("Ar",
                           "Foxa1",
                           "Nkx3-1",
