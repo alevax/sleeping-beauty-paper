@@ -1,6 +1,7 @@
 # Libraries
 suppressWarnings(suppressMessages(library(tidyverse)))
 suppressWarnings(suppressMessages(library(viper)))
+suppressWarnings(suppressMessages(library(writexl)))
 
 # Functions
 GESTransform <- function(dat.mat, na.rm = TRUE){
@@ -16,6 +17,11 @@ filterOutNPSamples <- function(SleepingBeauty_mat, SleepingBeauty_metadata){
     pull(Sample_Identifier)
   SleepingBeauty_mat <- SleepingBeauty_mat[, NPp53_sample_names]
   return(SleepingBeauty_mat)
+}
+saveLargeMatToExcel <- function(mat, filename){
+  mat_xlsx <- cbind(rownames(mat), data.frame(round(mat, 2)))
+  colnames(mat_xlsx)[1] <- "rowname"
+  writexl::write_xlsx(mat_xlsx, filename, col_names = TRUE)
 }
 
 # Load Matrices
@@ -70,3 +76,13 @@ saveRDS(SleepingBeauty_viper, "experiments/oncomatch-analysis/processed_data/vip
 saveRDS(SU2CEastCoast_viper, "experiments/oncomatch-analysis/processed_data/viper/SU2CEastCoast_viper_zscore_SU2CNets.rds")
 saveRDS(SU2CWestCoast_viper, "experiments/oncomatch-analysis/processed_data/viper/SU2CWestCoast_viper_zscore_SU2CNets.rds")
 saveRDS(Beltran_viper, "experiments/oncomatch-analysis/processed_data/viper/Beltran_viper_zscore_SU2CNets.rds")
+
+saveLargeMatToExcel(
+  data.frame(Beltran_viper),
+  "experiments/oncomatch-analysis/processed_data/viper/Beltran_viper_zscore_SU2CNets.xlsx"
+)
+saveLargeMatToExcel(
+  data.frame(SU2CEastCoast_viper),
+  "experiments/oncomatch-analysis/processed_data/viper/SU2CEastCoast_viper_zscore_SU2CNets.xlsx"
+)
+
