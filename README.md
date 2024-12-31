@@ -1,5 +1,14 @@
 # sleeping-beauty-paper
-The packages required to run this pipeline:
+
+The main.sh file contains a bash pipeline that will recreate the entire analysis.
+
+To run this pipeline on a Mac, one can do the following:
+
+```
+bash PATH_TO_DIR/sleeping-beauty-paper/main.sh
+```
+
+This will create a `experiments/` directory within `sleeping-beauty-paper/` containing the results.
 
 Code to generate figures for the Sleeping Beauty Paper
 
