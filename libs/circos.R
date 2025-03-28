@@ -44,7 +44,7 @@ left_out_TD <- left_out_TD %>% dplyr::select(mgi_symbol = gene_name,chromosome_n
 TD_annotation_final <- rbind(left_out_TD,TD_unique)
 
 # Read in the BED file
-final_bed <- read.table("data/tapdance/raw_prostate.BED", sep = "\t",header = FALSE, skip = 1)
+final_bed <- read.table("TAPDANCE_NEPC/results/raw_prostate.BED", sep = "\t",header = FALSE, skip = 1)
 positive_bed <- final_bed %>% dplyr::filter(V6 == "+") %>% dplyr::select(V1,V2,V3,V5)
 negative_bed <- final_bed %>% dplyr::filter(V6 == "-") %>% dplyr::select(V1,V2,V3,V5)
 

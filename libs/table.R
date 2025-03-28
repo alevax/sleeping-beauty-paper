@@ -106,7 +106,7 @@ add_metadata_to_unsplit <- function(df, split_string = "::") {
 }
 
 # Read in file
-TD.001 <- read.csv("data/tapdance/cis_all-nr-prostate-0.001.csv", header = T)
+TD.001 <- read.csv("TAPDANCE_NEPC/results/all/cis_all-nr-prostate-0.001.csv", header = T)
 
 # Split into different genes per line
 TD.001_split <- split_genes(TD.001) %>% unique()

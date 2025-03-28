@@ -9,3 +9,6 @@ sleeping-beauty-paper.Rproj
 data/.DS_Store
 data/cindy-results/.DS_Store
 data/mouse-analysis/.DS_Store
+
+TAPDANCE_NEPC/data/seqs.tab
+TAPDANCE_NEPC/mapping/

@@ -29,7 +29,7 @@ suppressPackageStartupMessages(library(pheatmap))
 filepath_SB_LIST_CIS_and_RNAseq_2020_OCT_20_xlsx = "data/mouse-analysis/SB List CIS and RNAseq_2020_OCT_20.xlsx"
 filepath_sb_rna_seq_samples_table_updated_Mar2022_xlsx = "data/pathology/sb-rna-seq-samples-table_updated_Mar2022.xlsx"
 filepath_raw_counts_all_mice_gene_symbols_kallisto_counts_rds = "data/sb-counts/raw-counts-all-mice-gene-symbols-kallisto-counts.rds"
-filepath_cis_all_nr_prostate_0_001_csv = "data/cis-results/cis_all-nr-prostate-0.001.csv"
+filepath_cis_all_nr_prostate_0_001_csv = "TAPDANCE_NEPC/results/all/cis_all-nr-prostate-0.001.csv"
 filepath_gemms_network_unPruned_rds = "data/sb-networks/gemms-network_unPruned.rds"
 
 # source("../vaxtools/R/utils.R")

@@ -13,7 +13,7 @@ all.exonic_parts <- exonicParts(txdb, linked.to.single.gene.only=TRUE)
 all.gene_id <- mcols(all.exonic_parts)$gene_id
 all.genes <- genes(txdb)
 all.promoters <- promoters(all.genes,upstream=100,downstream=50)
-simplified_bed <- read.table("data/tapdance/all-nr-prostate-0.001.BED", sep = "\t",header = FALSE, skip = 1)
+simplified_bed <- read.table("TAPDANCE_NEPC/results/all/all-nr-prostate-0.001.BED", sep = "\t",header = FALSE, skip = 1)
 
 # Function to create a lollipop plot
 lolliplot_custom <- function(gene_symbol, gene_entrez, promoter_bp = 5000, overhang_bp = 0, names = TRUE){
