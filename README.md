@@ -8,7 +8,7 @@ The TAPDANCE (Transposon Analysis Pipeline for Driver And Cancer Element identif
 
 Full instructions for the TAPDANCE pipeline, including setup, configuration, and execution, can be found in the [TAPDANCE README](TAPDANCE_NEPC/README.md).
 
-The large input and intermediate files not included in this repository are available at [Zenodo](https://zenodo.org/placeholder-link). Final common insertion site level data outputs are contained in the `TAPDANCE_NEPC` subdirectory.
+The large input and intermediate files not included in this repository are available at [Zenodo](https://zenodo.org/records/15098998). Final common insertion site level data outputs are contained in the `TAPDANCE_NEPC` subdirectory.
 
 ## Downstream Analysis (R)
 

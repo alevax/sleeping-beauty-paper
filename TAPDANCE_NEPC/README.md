@@ -6,9 +6,9 @@ Transposon Analysis Pipeline for Driver And Cancer Element identification, modif
 
 This repository includes the complete TAPDANCE analysis results for the NEPC study. All output files and data are provided, with two exceptions:
 
-1. **`seqs.tab`**: This large input file is not included in the repository but is available at [Zenodo](https://zenodo.org/placeholder-link) 
+1. **`seqs.tab`**: This large input file is not included in the repository but is available at [Zenodo](https://zenodo.org/records/15098998) 
 
-2. **`mapping/` folder**: The intermediate mapping files produced by TAPDANCE.pl are also available at the same [Zenodo](https://zenodo.org/placeholder-link) link
+2. **`mapping/` folder**: The intermediate mapping files produced by TAPDANCE.pl are also available at the same [Zenodo](https://zenodo.org/records/15098998) link
 
 Additional analysis and results beyond the TAPDANCE pipeline are available in a companion repository: [https://github.com/mat10d/TAPDANCE_NEPC](https://github.com/mat10d/TAPDANCE_NEPC)
 
@@ -144,7 +144,7 @@ AACGGACAACTT            AACGGACAACTTAAGTGTATGTAAACTTCCGACTTCAACTGTATACTTAAGTGGTG
 
 **Used in**: `TAPDANCE.pl` - Primary input file for identifying and mapping transposon insertions.
 
-**Note**: Due to its large size, this file is not included in the repository but is available at the [Zenodo](https://zenodo.org/placeholder-link) link.
+**Note**: Due to its large size, this file is not included in the repository but is available at the [Zenodo](https://zenodo.org/records/15098998) link.
 
 ### 2. `barcode2lib.txt`
 Maps barcodes to specific libraries and indicates whether they're from the left or right end of the transposon.
