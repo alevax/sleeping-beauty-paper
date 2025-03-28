@@ -10,6 +10,8 @@ This repository includes the complete TAPDANCE analysis results for the NEPC stu
 
 2. **`mapping/` folder**: The intermediate mapping files produced by TAPDANCE.pl are also available at the same [Zenodo](https://zenodo.org/records/15098998) link
 
+3. **`CIS/` folder**: The intermediate CIS analysis files are also available at the [Zenodo](https://zenodo.org/records/15098998) link
+
 Additional analysis and results beyond the TAPDANCE pipeline are available in a companion repository: [https://github.com/mat10d/TAPDANCE_NEPC](https://github.com/mat10d/TAPDANCE_NEPC)
 
 ## Setup Instructions
