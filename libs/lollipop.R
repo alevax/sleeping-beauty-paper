@@ -34,6 +34,49 @@ load_lollipop_data <- function() {
   # Load sample metadata for NEPC status and RNA-seq mapping
   cat("Loading sample metadata...\n")
   sample_metadata <<- load_sample_metadata()
+
+  # Load fusion data for marking insertions with fusion events
+  # Note: Fusion file uses RNA-seq IDs (CMZ*), but CIS data uses DNA sample IDs
+  # We need to convert CMZ IDs to DNA sample IDs using sample_metadata
+  cat("Loading fusion data...\n")
+  fusion_file <- "data/fusion_finder/all_genes_cis_fusions.csv"
+  if(file.exists(fusion_file)) {
+    fusion_data <<- read.csv(fusion_file, stringsAsFactors = FALSE)
+
+    # Map CMZ (RNA-seq) IDs to DNA sample IDs
+    # sample_metadata has: sample_id (DNA), rnaseq_id (CMZ, may be comma-separated)
+    # We need to find which DNA sample_id corresponds to each CMZ ID
+    cmz_to_dna <- function(cmz_id) {
+      # Search for CMZ ID in rnaseq_id column (may be comma-separated)
+      matches <- sapply(sample_metadata$rnaseq_id, function(rna_ids) {
+        if(is.na(rna_ids)) return(FALSE)
+        cmz_id %in% strsplit(rna_ids, ",")[[1]]
+      })
+      if(any(matches)) {
+        return(sample_metadata$sample_id[which(matches)[1]])
+      }
+      return(NA)
+    }
+
+    # Convert fusion sample IDs from CMZ to DNA format
+    fusion_data$dna_sample_id <- sapply(fusion_data$sample, cmz_to_dna)
+
+    # Create lookup table with DNA sample IDs AND insertion coordinates
+    # This allows coordinate-based matching (not just gene+sample)
+    fusion_lookup_tmp <- fusion_data[!is.na(fusion_data$dna_sample_id),
+                                      c("gene_name", "dna_sample_id", "insertion_start", "insertion_end")]
+    fusion_lookup_tmp <- unique(fusion_lookup_tmp)
+    names(fusion_lookup_tmp)[2] <- "sample"  # Rename for consistency
+    fusion_lookup <<- fusion_lookup_tmp
+
+    cat("  Loaded", nrow(fusion_lookup), "gene-sample-coordinate fusion entries\n")
+    cat("  CMZ IDs mapped:", paste(unique(fusion_data$sample), collapse=", "), "\n")
+    cat("  DNA IDs mapped:", paste(unique(fusion_lookup$sample), collapse=", "), "\n")
+  } else {
+    cat("  Warning: Fusion file not found, skipping fusion annotation\n")
+    fusion_lookup <<- data.frame(gene_name = character(), sample = character())
+  }
+
   cat("Data loaded.\n")
 }
 
@@ -102,7 +145,8 @@ COLORS <- list(
   exon_fill = "#bdc3c7",        # Light gray for exons
   exon_border = "#7f8c8d",      # Darker gray for exon borders
   promoter_fill = "#f39c12",    # Orange for promoter
-  promoter_border = "#d68910"   # Darker orange for promoter border
+  promoter_border = "#f39c12",  # Same orange for clean look
+  fusion_border = "#FFD700"     # True gold for fusion events
 )
 
 # Updated lollipop function
@@ -208,13 +252,12 @@ lolliplot_updated <- function(gene_symbol, gene_entrez, promoter_bp = 5000,
   # Determine if each insertion overlaps exons (exonic vs intronic)
   is_exonic <- countOverlaps(insertions.gr, gene_exons) > 0
 
-  # Determine strand relationship
+  # Determine strand relationship (activation vs disruption orientation)
+  # TAPDANCE orient is gene-relative (per Tim Starr, Mar 2021):
+  # + = transposon is oriented to drive gene expression (activation)
+  # - = transposon is oriented opposite to gene (disruption)
   insertion_strand <- CIS_subset$V6
-  if(strand == "+") {
-    is_same_strand <- insertion_strand == "+"
-  } else {
-    is_same_strand <- insertion_strand == "-"
-  }
+  is_same_strand <- insertion_strand == "+"
 
   # Assign colors based on exonic status AND strand
   insertions.gr$color <- case_when(
@@ -417,11 +460,11 @@ run_full_analysis <- function(distance_threshold = 2000, generate_plots = TRUE) 
   cat("\n=== Building Comprehensive Table ===\n")
   master_table <- do.call(rbind, all_insertions)
 
-  # Reorder columns for clarity (now includes NEPC and RNA-seq info)
+  # Reorder columns for clarity (now includes NEPC, RNA-seq, and fusion info)
   master_table <- master_table[, c(
     "gene_name", "entrez_id", "gene_chromosome", "gene_strand", "gene_start", "gene_end",
     "cis_start", "cis_end",
-    "sample", "is_nepc", "has_rnaseq", "rnaseq_id",
+    "sample", "is_nepc", "has_rnaseq", "rnaseq_id", "has_fusion",
     "insertion_chr", "insertion_start", "insertion_end", "insertion_midpoint",
     "read_count", "insertion_strand", "distance_to_gene", "is_distant",
     "is_exonic", "is_same_strand", "classification"
@@ -439,21 +482,26 @@ run_full_analysis <- function(distance_threshold = 2000, generate_plots = TRUE) 
   cat("========================================\n")
   cat("Total insertions:", nrow(master_table), "\n")
   cat("Total genes:", length(unique(master_table$gene_name)), "\n")
-  cat("  - Genes with nearby insertions (have plots):", length(genes_with_nearby), "\n")
-  cat("  - Genes with only distant insertions (no plots):", length(genes_all_distant), "\n")
+  cat("  - Genes with gene-body insertions:", length(genes_with_nearby), "\n")
+  cat("  - Genes with only upstream/distant insertions:", length(genes_all_distant), "\n")
   cat("Failed genes:", length(failed_genes), "\n")
   cat("Skipped (no Entrez):", length(skipped_genes), "\n")
-  if(generate_plots) cat("\nPlots saved to:", plots.dir, "\n")
+  if(generate_plots) {
+    cat("\nPlots saved to:", plots.dir, "(all genes, using CIS boundaries)\n")
+    cat("Fusion plots also saved to:", file.path(plots.dir, "fusions"), "\n")
+  }
 
   # Print classification summary
   cat("\n--- Classification Summary ---\n")
   print(table(master_table$classification))
 
-  # Print NEPC/RNA-seq summary
+  # Print NEPC/RNA-seq/fusion summary
   cat("\n--- Sample Phenotype Summary ---\n")
   cat("Insertions from NEPC samples:", sum(master_table$is_nepc, na.rm = TRUE), "\n")
   cat("Insertions from non-NEPC samples:", sum(!master_table$is_nepc, na.rm = TRUE), "\n")
   cat("Insertions with matched RNA-seq:", sum(master_table$has_rnaseq, na.rm = TRUE), "\n")
+  cat("Insertions with fusion events:", sum(master_table$has_fusion, na.rm = TRUE), "\n")
+  cat("Genes with fusion events:", length(unique(master_table$gene_name[master_table$has_fusion])), "\n")
 
   return(list(
     master_table = master_table,
@@ -530,13 +578,12 @@ process_gene <- function(gene_symbol, gene_entrez, distance_threshold = 2000,
   # Classify: exonic vs intronic (only meaningful for non-distant insertions)
   is_exonic <- countOverlaps(insertions.gr, gene_exons) > 0
 
-  # Classify: same strand vs opposite strand
+  # Classify: same strand vs opposite strand (activation vs disruption)
+  # TAPDANCE orient is gene-relative (per Tim Starr, Mar 2021):
+  # + = transposon is oriented to drive gene expression (activation)
+  # - = transposon is oriented opposite to gene (disruption)
   insertion_strand <- CIS_subset$V6
-  if(strand == "+") {
-    is_same_strand <- insertion_strand == "+"
-  } else {
-    is_same_strand <- insertion_strand == "-"
-  }
+  is_same_strand <- insertion_strand == "+"
 
   # Build classification - distant insertions get "distant" classification
   classification <- case_when(
@@ -555,6 +602,23 @@ process_gene <- function(gene_symbol, gene_entrez, distance_threshold = 2000,
   is_nepc <- sample_info$is_nepc
   has_rnaseq <- sample_info$has_rnaseq
   rnaseq_id <- sample_info$rnaseq_id
+
+  # Check for fusion events - coordinate-based matching
+  # Match by gene + insertion coordinates ONLY (not sample ID)
+  # This is because one CMZ RNA-seq ID can map to multiple DNA sample IDs,
+  # but coordinates uniquely identify each insertion event
+  insertion_starts <- CIS_subset$V2
+  insertion_ends <- CIS_subset$V3
+  has_fusion <- sapply(seq_along(insertion_starts), function(i) {
+    ins_start <- insertion_starts[i]
+    ins_end <- insertion_ends[i]
+    # Find fusion entries for this gene (any sample)
+    gene_fusions <- fusion_lookup[fusion_lookup$gene_name == gene_symbol, ]
+    if(nrow(gene_fusions) == 0) return(FALSE)
+    # Check if insertion coordinates overlap with any fusion's insertion coordinates
+    any(ins_start <= gene_fusions$insertion_end &
+        ins_end >= gene_fusions$insertion_start)
+  })
 
   # Build result data frame
   result_df <- data.frame(
@@ -581,25 +645,22 @@ process_gene <- function(gene_symbol, gene_entrez, distance_threshold = 2000,
     is_nepc = is_nepc,
     has_rnaseq = has_rnaseq,
     rnaseq_id = rnaseq_id,
+    has_fusion = has_fusion,
     stringsAsFactors = FALSE
   )
 
-  # Generate plot only if there are non-distant insertions
-  has_nearby_insertions <- any(!is_distant)
-  if(generate_plot && has_nearby_insertions) {
-    # Define plot region around gene body
-    plot_start <- gene_start_coord - distance_threshold
-    plot_end <- gene_end_coord + distance_threshold
-
-    # Filter to non-distant insertions for plotting
-    nearby_idx <- !is_distant
-    CIS_nearby <- CIS_subset[nearby_idx, ]
+  # Generate plot for ALL genes using union of CIS + gene body with padding
+  if(generate_plot) {
+    # Use union of CIS region AND gene body, plus padding for lollipop visibility
+    padding <- 2000  # bp padding on each end
+    plot_start <- min(cis_start, gene_start_coord) - padding
+    plot_end <- max(cis_end, gene_end_coord) + padding
 
     tryCatch({
       generate_lollipop_plot(gene_symbol, gene_entrez, gene_exons, strand,
                              chromosome, plot_start, plot_end,
-                             CIS_nearby, is_exonic[nearby_idx],
-                             is_same_strand[nearby_idx], classification[nearby_idx])
+                             CIS_subset, is_exonic,
+                             is_same_strand, classification)
     }, error = function(e) {
       # Silently skip plot errors
     })
@@ -631,7 +692,7 @@ generate_lollipop_plot <- function(gene_symbol, gene_entrez, gene_exons, strand,
   gene_exons$height <- 0.08
   names(gene_exons) <- NULL
 
-  # TSS marker
+  # TSS marker with directional arrow
   if(strand == "+") {
     tss_pos <- min(start(gene_exons))
   } else {
@@ -644,6 +705,7 @@ generate_lollipop_plot <- function(gene_symbol, gene_entrez, gene_exons, strand,
   tss_marker$color <- COLORS$promoter_border
   tss_marker$height <- 0.12
   names(tss_marker) <- NULL
+
 
   # Range for plotting
   range <- GRanges(seqnames = chromosome,
@@ -673,6 +735,21 @@ insertions.gr$color <- case_when(
   is_nepc <- ifelse(is.na(sample_info$is_nepc), FALSE, sample_info$is_nepc)
   has_rnaseq <- ifelse(is.na(sample_info$has_rnaseq), FALSE, sample_info$has_rnaseq)
 
+  # Check for fusion events - coordinate-based matching
+  # Match by gene + insertion coordinates ONLY (not sample ID)
+  # This is because one CMZ RNA-seq ID can map to multiple DNA sample IDs,
+  # but coordinates uniquely identify each insertion event
+  insertion_starts <- CIS_subset$V2
+  insertion_ends <- CIS_subset$V3
+  has_fusion <- sapply(seq_along(insertion_starts), function(i) {
+    ins_start <- insertion_starts[i]
+    ins_end <- insertion_ends[i]
+    gene_fusions <- fusion_lookup[fusion_lookup$gene_name == gene_symbol, ]
+    if(nrow(gene_fusions) == 0) return(FALSE)
+    any(ins_start <= gene_fusions$insertion_end &
+        ins_end >= gene_fusions$insertion_start)
+  })
+
   # Shape: circle (pch 21) = NEPC, square (pch 22) = non-NEPC
   # trackViewer uses shape names: "circle", "square", "diamond", "triangle_point_up", etc.
   insertions.gr$shape <- ifelse(is_nepc, "circle", "square")
@@ -682,7 +759,6 @@ insertions.gr$color <- case_when(
 
   insertions.gr$score <- CIS_subset$V5
   insertions.gr$height <- CIS_subset$V5
-  insertions.gr$border <- "#2c3e50"
   insertions.gr$alpha <- 0.85
   insertions.gr$cex <- 0.9  # Slightly larger for visibility
   insertions.gr$SNPsideID <- "top"
@@ -694,13 +770,15 @@ insertions.gr$color <- case_when(
   # Ensure output directory exists
   dir.create(plots.dir, showWarnings = FALSE, recursive = TRUE)
 
-  # Generate plot
-  output_file <- file.path(plots.dir, paste0(gene_symbol, ".pdf"))
-  pdf(output_file, width = 10, height = 5)  # Slightly taller for two-row legend
-
   features <- c(gene_exons, tss_marker)
 
-  lolliplot(insertions.gr, features, range,
+  # --- MAIN PLOT (clean, no fusion annotation) ---
+  insertions.gr$border <- "#2c3e50"  # Standard dark gray border for all
+
+  output_file <- file.path(plots.dir, paste0(gene_symbol, ".pdf"))
+  pdf(output_file, width = 10, height = 5)
+
+  vp <- lolliplot(insertions.gr, features, range,
             ylab = "Read Count",
             ylab.gp = gpar(fontsize = 11, fontface = "bold"),
             yaxis.gp = gpar(fontsize = 9),
@@ -708,6 +786,30 @@ insertions.gr$color <- case_when(
             xaxis = xaxis,
             legend = FALSE,
             jitter = "node")
+
+  # Add horizontal TSS direction arrow
+  # Calculate position - convert genomic coord to viewport coord
+  tss_rel_x <- (tss_pos - start_bp) / (end_bp - start_bp)
+  # Map to plot area - calibrate these values
+  plot_left <- 0.095  # Left edge of plot area
+  plot_width <- 0.81  # Width of plot area
+  arrow_x <- plot_left + tss_rel_x * plot_width
+  arrow_y <- 0.19  # At gene track level
+  arrow_len <- 0.025  # Length of arrow in npc
+
+  if(strand == "+") {
+    # Horizontal arrow pointing right
+    grid.segments(x0 = arrow_x, y0 = arrow_y,
+                  x1 = arrow_x + arrow_len, y1 = arrow_y,
+                  arrow = arrow(angle = 25, length = unit(0.08, "inches"), type = "closed"),
+                  gp = gpar(col = COLORS$promoter_fill, lwd = 1.5, fill = COLORS$promoter_fill))
+  } else {
+    # Horizontal arrow pointing left
+    grid.segments(x0 = arrow_x - arrow_len, y0 = arrow_y,
+                  x1 = arrow_x, y1 = arrow_y,
+                  arrow = arrow(angle = 25, length = unit(0.08, "inches"), type = "closed", ends = "first"),
+                  gp = gpar(col = COLORS$promoter_fill, lwd = 1.5, fill = COLORS$promoter_fill))
+  }
 
   # Custom legend - Row 1: Colors (exonic/intronic status)
   pushViewport(viewport(x = 0.5, y = 0.88, width = 0.9, height = 0.04))
@@ -741,6 +843,75 @@ insertions.gr$color <- case_when(
             gp = gpar(cex = 1.4, fontface = "bold.italic"))
 
   dev.off()
+
+  # --- FUSION PLOT (only for genes with fusions, in separate folder) ---
+  if(any(has_fusion)) {
+    fusions_dir <- file.path(base.dir, "plots", "fusions")
+    dir.create(fusions_dir, showWarnings = FALSE, recursive = TRUE)
+
+    # Apply fusion styling: gold border, thicker line, slightly larger
+    insertions.gr$border <- ifelse(has_fusion, COLORS$fusion_border, "#2c3e50")
+    insertions.gr$lwd <- ifelse(has_fusion, 3.5, insertions.gr$lwd)  # Thicker border for fusions
+    insertions.gr$cex <- ifelse(has_fusion, 1.2, 0.9)  # Slightly larger for fusions
+
+    fusion_output <- file.path(fusions_dir, paste0(gene_symbol, "_with_fusions.pdf"))
+    pdf(fusion_output, width = 10, height = 5)
+
+    lolliplot(insertions.gr, features, range,
+              ylab = "Read Count",
+              ylab.gp = gpar(fontsize = 11, fontface = "bold"),
+              yaxis.gp = gpar(fontsize = 9),
+              xaxis.gp = gpar(fontsize = 8),
+              xaxis = xaxis,
+              legend = FALSE,
+              jitter = "node")
+
+    # Add horizontal TSS direction arrow (same as main plot)
+    if(strand == "+") {
+      grid.segments(x0 = arrow_x, y0 = arrow_y,
+                    x1 = arrow_x + arrow_len, y1 = arrow_y,
+                    arrow = arrow(angle = 25, length = unit(0.08, "inches"), type = "closed"),
+                    gp = gpar(col = COLORS$promoter_fill, lwd = 1.5, fill = COLORS$promoter_fill))
+    } else {
+      grid.segments(x0 = arrow_x - arrow_len, y0 = arrow_y,
+                    x1 = arrow_x, y1 = arrow_y,
+                    arrow = arrow(angle = 25, length = unit(0.08, "inches"), type = "closed", ends = "first"),
+                    gp = gpar(col = COLORS$promoter_fill, lwd = 1.5, fill = COLORS$promoter_fill))
+    }
+
+    # Custom legend - Row 1: Colors (exonic/intronic status)
+    pushViewport(viewport(x = 0.5, y = 0.88, width = 0.9, height = 0.04))
+    grid.draw(legendGrob(
+      labels = c("Exonic (sense)", "Exonic (antisense)",
+                 "Intronic (sense)", "Intronic (antisense)"),
+      pch = 21,
+      gp = gpar(col = c(COLORS$exonic_same, COLORS$exonic_opposite,
+                        COLORS$intronic_same, COLORS$intronic_opposite),
+                fill = c(COLORS$exonic_same, COLORS$exonic_opposite,
+                         COLORS$intronic_same, COLORS$intronic_opposite)),
+      ncol = 4, byrow = TRUE
+    ))
+    popViewport()
+
+    # Custom legend - Row 2: Shapes (NEPC), borders (RNA-seq), and fusion
+    pushViewport(viewport(x = 0.5, y = 0.82, width = 0.9, height = 0.04))
+    grid.draw(legendGrob(
+      labels = c("NEPC", "non-NEPC", "Has RNA-seq", "Has Fusion"),
+      pch = c(21, 22, 21, 21),
+      gp = gpar(col = c("gray40", "gray40", "black", COLORS$fusion_border),
+                fill = c("gray70", "gray70", "gray70", "gray70"),
+                lwd = c(1.5, 1.5, 2.5, 3.5)),
+      ncol = 4, byrow = TRUE
+    ))
+    popViewport()
+
+    # Title (with fusion indicator)
+    grid.text(paste0(gene_symbol, " (", strand, " strand) - with fusions"),
+              x = 0.5, y = 0.94,
+              gp = gpar(cex = 1.4, fontface = "bold.italic"))
+
+    dev.off()
+  }
 }
 
 #' Compare our classification with Sai's analysis
@@ -1173,12 +1344,16 @@ generate_paper_summary <- function(master_table = NULL) {
 #
 # Output structure:
 #   experiments/lollipop/
-#   ├── plots/                     # PDF lollipop plots (172 files)
-#   │   ├── Sirt1.pdf
-#   │   └── ...
+#   ├── plots/                     # PDF lollipop plots (ALL genes with CIS)
+#   │   ├── Sirt1.pdf              # Uses CIS boundaries (includes upstream insertions)
+#   │   ├── Aifm3.pdf              # Now generated (upstream insertions visible)
+#   │   ├── ...
+#   │   └── fusions/               # Subset: genes with fusion events
+#   │       ├── Smurf2_with_fusions.pdf
+#   │       └── ...
 #   └── tables/                    # CSV data tables
-#       ├── all_insertions_master.csv    # All 3079 insertions with SB mechanism
-#       ├── gene_summary.csv             # Per-gene summary (282 genes)
+#       ├── all_insertions_master.csv    # All insertions with classifications
+#       ├── gene_summary.csv             # Per-gene summary
 #       ├── key_genes_insertions.csv     # 15 reviewer-requested genes only
 #       └── paper_summary.csv            # Overall statistics for paper
 #
