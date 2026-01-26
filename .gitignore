@@ -13,3 +13,6 @@ data/mouse-analysis/.DS_Store
 TAPDANCE_NEPC/data/seqs.tab
 TAPDANCE_NEPC/mapping/
 TAPDANCE_NEPC/CIS/
+
+data/Beltran-2016/data_obj_Beltran_non-NEPC_vs_NEPC.rds
+data/SU2C_EastCoast/abida-2019-processed-data.rds
