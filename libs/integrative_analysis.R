@@ -36,7 +36,7 @@ filepath_cindy_table_su2c_plus_tcga_merged_rds <- "data/cindy-results/cindy-tabl
 filepath_NPp53_NEPC_effect_on_SB_activated_tibble_rds <- "experiments/all-samples-sb-rna-seq-analysis/reports/edgeR/NPp53_NEPC_effect_on_SB_activated/NPp53_NEPC_effect_on_SB_activated-tibble.rds"
 # filepath_NPp53_SB_effect_on_NEPC_tibble_rds <- "experiments/all-samples-sb-rna-seq-analysis/reports/edgeR/NPp53_SB_effect_on_NEPC/NPp53_SB_effect_on_NEPC-tibble.rds"
 filepath_vpmat_rds <- "experiments/all-samples-sb-rna-seq-analysis/reports/vpmat.rds"
-filepath_cis_all_nr_prostate_0_001_csv <- "data/cis-results/cis_all-nr-prostate-0.001.csv"
+filepath_cis_all_nr_prostate_0_001_csv <- "TAPDANCE_NEPC/results/all/cis_all-nr-prostate-0.001.csv"
 filepath_SB_List_CIS_and_RNAseq_2020_OCT_20_xlsx <- "data/mouse-analysis/SB List CIS and RNAseq_2020_OCT_20.xlsx"
 filepath_tfs_csv <- "data/regulators-lists/tfs.csv"
 filepath_cotfs_csv <- "data/regulators-lists/cotfs.csv"
