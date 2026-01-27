@@ -133,3 +133,35 @@ mkdir -p experiments/lollipop/
 Rscript libs/lollipop.R \
 > experiments/lollipop/lollipop-analysis-log.txt 2>&1
 echo ""
+
+echo "@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@"
+echo "-------------------------------------------------------------------"
+echo "-------------------- FUSION FINDER ANALYSIS -----------------------"
+echo "-------------------------------------------------------------------"
+echo "@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@"
+Rscript libs/fusion_finder_analysis.R \
+> experiments/fusion-finder/fusion-finder-analysis-log.txt 2>&1
+echo ""
+
+echo "@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@"
+echo "-------------------------------------------------------------------"
+echo "------------------ ISOFORM SWITCHING ANALYSIS ---------------------"
+echo "-------------------------------------------------------------------"
+echo "@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@"
+mkdir -p experiments/isoform-switching/
+mkdir -p experiments/isoform-switching/processed_data/
+mkdir -p experiments/isoform-switching/reports/
+Rscript libs/isoform-switching/01_cis_isoform_switch_overlap.R \
+> experiments/isoform-switching/01-cis-overlap-log.txt 2>&1
+Rscript libs/isoform-switching/02_cis_switch_consequences.R \
+> experiments/isoform-switching/02-consequences-log.txt 2>&1
+echo ""
+
+echo "@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@"
+echo "-------------------------------------------------------------------"
+echo "------------------ CHIMERIC ISOFORMS ANALYSIS ---------------------"
+echo "-------------------------------------------------------------------"
+echo "@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@"
+Rscript libs/chimeric_isoforms_analysis.R \
+> experiments/chimeric-isoforms/chimeric-isoforms-analysis-log.txt 2>&1
+echo ""

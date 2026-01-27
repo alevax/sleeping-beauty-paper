@@ -1,15 +1,88 @@
+# === R Project Files ===
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
-experiments/
-old/
 sleeping-beauty-paper.Rproj
+
+# === Generated Output Directories ===
+# Experiments directory (created by main.sh pipeline)
+experiments/
+
+# Archive/backup directory
+old/
+
+# === System Files ===
+# macOS metadata
 .DS_Store
 data/.DS_Store
 data/cindy-results/.DS_Store
 data/mouse-analysis/.DS_Store
 
+# === TAPDANCE NEPC Analysis ===
+# Raw sequence data
 TAPDANCE_NEPC/data/seqs.tab
+
+# Mapping outputs (BAM files)
 TAPDANCE_NEPC/mapping/
+
+# CIS analysis outputs
 TAPDANCE_NEPC/CIS/
+
+# === Fusion Finder Large Files ===
+# Raw data
+fusion_finder/data/fastq/*.fastq.gz
+fusion_finder/data/fastq/*.fq.gz
+
+# Results - ignore BAMs, keep fusions
+fusion_finder/results/
+
+# Reference files - ignore large files, keep chrSB.fa
+fusion_finder/reference/mm10*.fa
+fusion_finder/reference/mm10*.fai
+fusion_finder/reference/*.gtf
+fusion_finder/reference/*.gff
+fusion_finder/reference/hisat2_index/
+!fusion_finder/reference/chrSB.fa
+
+# Logs
+fusion_finder/logs/
+
+# === Isoform Switching Large Files ===
+# Raw/processed data
+isoform_switching/data/*.fastq.gz
+isoform_switching/data/*.fq.gz
+isoform_switching/data/bams/*.bam
+isoform_switching/data/bams/*.bai
+
+# Results - keep CSVs, exclude large files
+isoform_switching/results/salmon_quant/*/aux_info/
+isoform_switching/results/salmon_quant/*/libParams/
+isoform_switching/results/salmon_quant/*/logs/
+isoform_switching/results/isoformswitch/checkpoints/*.rds
+
+# Reference files
+isoform_switching/reference/*.fa
+isoform_switching/reference/*.fasta
+isoform_switching/reference/*.fai
+isoform_switching/reference/*.gtf
+isoform_switching/reference/*.gff
+isoform_switching/reference/salmon_index/
+
+# Logs
+isoform_switching/logs/
+
+# === Chimeric Isoforms Large Files ===
+# Data (mostly symlinks but be safe)
+chimeric_isoforms/data/bams/*.bam
+chimeric_isoforms/data/bams/*.bai
+chimeric_isoforms/data/reference/*.fa
+chimeric_isoforms/data/reference/*.fasta
+chimeric_isoforms/data/reference/*.fai
+chimeric_isoforms/data/reference/*.gtf
+
+# Results - all old outputs (now generated in experiments/)
+chimeric_isoforms/results/
+
+# Logs
+chimeric_isoforms/logs/
