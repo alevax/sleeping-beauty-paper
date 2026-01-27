@@ -48,26 +48,12 @@ fusion_finder/reference/hisat2_index/
 fusion_finder/logs/
 
 # === Isoform Switching Large Files ===
-# Raw/processed data
-isoform_switching/data/*.fastq.gz
-isoform_switching/data/*.fq.gz
-isoform_switching/data/bams/*.bam
-isoform_switching/data/bams/*.bai
-
-# Results - keep CSVs, exclude large files
-isoform_switching/results/salmon_quant/*/aux_info/
-isoform_switching/results/salmon_quant/*/libParams/
-isoform_switching/results/salmon_quant/*/logs/
-isoform_switching/results/isoformswitch/checkpoints/*.rds
-
-# Reference files
-isoform_switching/reference/*.fa
-isoform_switching/reference/*.fasta
-isoform_switching/reference/*.fai
-isoform_switching/reference/*.gtf
-isoform_switching/reference/*.gff
-isoform_switching/reference/salmon_index/
+# All data and results (pre-computed upstream analysis)
+isoform_switching/data/
+isoform_switching/results/
+isoform_switching/reference/
 
 # Logs
 isoform_switching/logs/
+isoform_switching/*.log
 

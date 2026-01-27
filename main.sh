@@ -149,12 +149,8 @@ echo "------------------ ISOFORM SWITCHING ANALYSIS ---------------------"
 echo "-------------------------------------------------------------------"
 echo "@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@"
 mkdir -p experiments/isoform-switching/
-mkdir -p experiments/isoform-switching/processed_data/
-mkdir -p experiments/isoform-switching/reports/
-Rscript libs/isoform-switching/01_cis_isoform_switch_overlap.R \
-> experiments/isoform-switching/01-cis-overlap-log.txt 2>&1
-Rscript libs/isoform-switching/02_cis_switch_consequences.R \
-> experiments/isoform-switching/02-consequences-log.txt 2>&1
+Rscript libs/isoform_switching_analysis.R \
+> experiments/isoform-switching/isoform-switching-analysis-log.txt 2>&1
 echo ""
 
 echo "@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@"
