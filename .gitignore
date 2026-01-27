@@ -25,35 +25,7 @@ TAPDANCE_NEPC/data/seqs.tab
 
 # Mapping outputs (BAM files)
 TAPDANCE_NEPC/mapping/
-
-# CIS analysis outputs
 TAPDANCE_NEPC/CIS/
 
-# === Fusion Finder Large Files ===
-# Raw data
-fusion_finder/data/
-
-# Results - ignore BAMs, keep fusions
-fusion_finder/results/
-
-# Reference files - ignore large files, keep chrSB.fa
-fusion_finder/reference/mm10*.fa
-fusion_finder/reference/mm10*.fai
-fusion_finder/reference/*.gtf
-fusion_finder/reference/*.gff
-fusion_finder/reference/hisat2_index/
-!fusion_finder/reference/chrSB.fa
-
-# Logs
-fusion_finder/logs/
-
-# === Isoform Switching Large Files ===
-# All data and results (pre-computed upstream analysis)
-isoform_switching/data/
-isoform_switching/results/
-isoform_switching/reference/
-
-# Logs
-isoform_switching/logs/
-isoform_switching/*.log
-
+data/Beltran-2016/data_obj_Beltran_non-NEPC_vs_NEPC.rds
+data/SU2C_EastCoast/abida-2019-processed-data.rds
