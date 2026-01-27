@@ -39,3 +39,15 @@ export PATH
 ```
 
 After reloading your shell, you should now be able to run the script without encountering any errors.
+
+## Genomic Analyses
+
+Additional genomic analyses examine transposon-driven transcriptional changes in NEPC samples, including fusion events, isoform switching, and chimeric transcripts. These analyses integrate RNA-seq data with Common Insertion Site (CIS) results to identify functional consequences of transposon insertions. This requires non-R analyses, resulting the below folders:
+
+**Fusion Finder** (`fusion_finder/`) - Detects RNA fusion events from transposon-genome junctions and identifies genes where insertions correlate with aberrant transcription.
+
+**Isoform Switching** (`isoform_switching/`) - Identifies differential isoform usage between NEPC and non-NEPC samples in genes with transposon insertions using IsoformSwitchAnalyzeR.
+
+These analyses are integrated into `main.sh` and run automatically as part of the full pipeline. Results are output to `experiments/` alongside other downstream analyses.
+
+**Note:** Upstream preprocessing (alignment, quantification) requires large data files not included in this repository. Pre-computed results used by the publication scripts are available in the respective analysis directories.

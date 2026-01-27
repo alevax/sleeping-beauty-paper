@@ -133,3 +133,31 @@ mkdir -p experiments/lollipop/
 Rscript libs/lollipop.R \
 > experiments/lollipop/lollipop-analysis-log.txt 2>&1
 echo ""
+
+echo "@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@"
+echo "-------------------------------------------------------------------"
+echo "-------------------- FUSION FINDER ANALYSIS -----------------------"
+echo "-------------------------------------------------------------------"
+echo "@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@"
+Rscript libs/fusion_finder_analysis.R \
+> experiments/fusion-finder/fusion-finder-analysis-log.txt 2>&1
+echo ""
+
+echo "@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@"
+echo "-------------------------------------------------------------------"
+echo "------------------ ISOFORM SWITCHING ANALYSIS ---------------------"
+echo "-------------------------------------------------------------------"
+echo "@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@"
+mkdir -p experiments/isoform-switching/
+Rscript libs/isoform_switching_analysis.R \
+> experiments/isoform-switching/isoform-switching-analysis-log.txt 2>&1
+echo ""
+
+echo "@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@"
+echo "-------------------------------------------------------------------"
+echo "------------------ CHIMERIC ISOFORMS ANALYSIS ---------------------"
+echo "-------------------------------------------------------------------"
+echo "@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@-@"
+Rscript libs/chimeric_isoforms_analysis.R \
+> experiments/chimeric-isoforms/chimeric-isoforms-analysis-log.txt 2>&1
+echo ""

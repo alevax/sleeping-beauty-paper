@@ -1,16 +1,29 @@
+# === R Project Files ===
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
-experiments/
-old/
 sleeping-beauty-paper.Rproj
+
+# === Generated Output Directories ===
+# Experiments directory (created by main.sh pipeline)
+experiments/
+
+# Archive/backup directory
+old/
+
+# === System Files ===
+# macOS metadata
 .DS_Store
 data/.DS_Store
 data/cindy-results/.DS_Store
 data/mouse-analysis/.DS_Store
 
+# === TAPDANCE NEPC Analysis ===
+# Raw sequence data
 TAPDANCE_NEPC/data/seqs.tab
+
+# Mapping outputs (BAM files)
 TAPDANCE_NEPC/mapping/
 TAPDANCE_NEPC/CIS/
 
