@@ -42,7 +42,7 @@ all_insertions_file <- "data/cis-results/all_insertions_master.csv"
 key_genes_file <- "data/cis-results/key_genes_insertions.csv"
 fusions_file <- file.path(data_dir, "results/fusions/fusions_all.txt")
 samples_file <- file.path(data_dir, "data/fastq/samples.txt")
-metadata_file <- file.path(data_dir, "R/RNAseq and CIS list Sep2020.xlsx")
+metadata_file <- "data/gene-expression-from-sb-mouse-models/RNAseq and CIS list Sep2020.xlsx"
 bam_dir <- file.path(data_dir, "results/bams")
 
 # Output directories (write to experiments/)

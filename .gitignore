@@ -31,8 +31,7 @@ TAPDANCE_NEPC/CIS/
 
 # === Fusion Finder Large Files ===
 # Raw data
-fusion_finder/data/fastq/*.fastq.gz
-fusion_finder/data/fastq/*.fq.gz
+fusion_finder/data/
 
 # Results - ignore BAMs, keep fusions
 fusion_finder/results/
