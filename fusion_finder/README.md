@@ -108,7 +108,7 @@ sbatch scripts/slurm_fusion_finder.sh
 
 ## Downstream Analysis
 
-The fusion finder analysis is integrated into the main paper analysis pipeline. From the repository root:
+The fusion finder analysis figures are integrated into the main paper analysis pipeline. From the repository root, after completing the abovve steps:
 
 ```bash
 # Run full pipeline including fusion analysis
