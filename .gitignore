@@ -71,17 +71,3 @@ isoform_switching/reference/salmon_index/
 # Logs
 isoform_switching/logs/
 
-# === Chimeric Isoforms Large Files ===
-# Data (mostly symlinks but be safe)
-chimeric_isoforms/data/bams/*.bam
-chimeric_isoforms/data/bams/*.bai
-chimeric_isoforms/data/reference/*.fa
-chimeric_isoforms/data/reference/*.fasta
-chimeric_isoforms/data/reference/*.fai
-chimeric_isoforms/data/reference/*.gtf
-
-# Results - all old outputs (now generated in experiments/)
-chimeric_isoforms/results/
-
-# Logs
-chimeric_isoforms/logs/
