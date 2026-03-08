@@ -516,7 +516,7 @@ my_tibble <- preprocessMyTibble(my_tibble, vpmat)
 ## > Gathering CIS-assiciated genes ----
 print_msg_info(">>> >> Gathering CIS-assiciated genes")
 print_msg_warn(">>> *** This List is not derived from NE-only samples ***")
-cis_table <- read_csv(filepath_cis_all_nr_prostate_0_001_csv, skip = 1)
+cis_table <- read_csv(filepath_cis_all_nr_prostate_0_001_csv)#, skip = 1)
 cis_table <- preprocessCisTable(cis_table)
 ## > Gathering SB RNA-Seq Metadata ----
 print_msg_info(">>> >> > Gathering SB RNA-Seq Metadata")

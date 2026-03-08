@@ -306,7 +306,8 @@ getMainHeatmap <- function(om,
                             cluster_rows =  FALSE,
                             use_raster = FALSE ,
                             name = "OncoMatch",
-                            rect_gp = gpar(col = "white", lwd = 2),
+                            # rect_gp = gpar(col = "white", lwd = 2), # white/absent gridlines
+                            rect_gp = gpar(col = "lightgray", lwd = 0.5),  # <-- light gray gridlines
                             left_annotation = df_annot_rows_left,
                             right_annotation = df_annot_rows_right ,
                             show_row_names = FALSE,

@@ -381,11 +381,11 @@ combineDataToConstructGraphMatrixWithCISHits <- function(cis_table.per_library,
 #####################################################################################
 #####################################################################################
 
-getSigList <- function(path_to_sig_csv){
+getRegList <- function(path_to_sig_csv){
   read_csv(path_to_sig_csv, col_names = FALSE)$X1
 }
-getMatWithOnlyTFAndCoTF <- function(mat, sig_list){
-  index <- !(rownames(mat) %in% sig_list)
+getMatWithOnlyTFAndCoTF <- function(mat, tfs_cotfs){
+  index <- (rownames(mat) %in% tfs_cotfs)
   mat <- mat[index,]
   return(mat)
 }
@@ -625,7 +625,7 @@ saveKnownTFsActivityPathwaysHeatmap<- function(df_annot_cols,
 # &-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&-&
 printVIPERHeatmapPlusCIS <- function(sb_data,
                                      g_mat,
-                                     sig_list,
+                                     tfs_cotfs,
                                      cis_table.per_library,
                                      rna_seq_table,
                                      hallmarks_hm,
@@ -636,7 +636,7 @@ printVIPERHeatmapPlusCIS <- function(sb_data,
   mat <- sb_data$vpmat
   
   print_msg_warn(">>> >> Selecting only TFs and coTFs ...")	
-  mat <- getMatWithOnlyTFAndCoTF(mat, sig_list)
+  mat <- getMatWithOnlyTFAndCoTF(mat, tfs_cotfs)
   selected_proteins <- getTopNProteinsFromStoufferSignature(mat)
   
   if(filter_NP == TRUE){
@@ -865,7 +865,7 @@ saveVIPERMinusCISHeatmap <- function(df_annot_cols,
 # ---------------------------------- MAIN FUNCTION ----------------------------------
 printVIPERHeatmapMinusCIS <- function(sb_data,
                                      g_mat,
-                                     sig_list,
+                                     tfs_cotfs,
                                      cis_table.per_library,
                                      rna_seq_table,
                                      hallmarks_hm,
@@ -876,7 +876,7 @@ printVIPERHeatmapMinusCIS <- function(sb_data,
   mat <- sb_data$vpmat
   
   print_msg_warn(">>> >> Selecting only TFs and coTFs ...")	
-  mat <- getMatWithOnlyTFAndCoTF(mat, sig_list)
+  mat <- getMatWithOnlyTFAndCoTF(mat, tfs_cotfs)
   selected_proteins <- getTopNProteinsFromStoufferSignature(mat)
   
   columns_dend <- getColumnsDendrogram_k3(mat)
@@ -982,7 +982,14 @@ g_mat <- combineDataToConstructGraphMatrixWithCISHits(cis_table.per_library,
 ## Loading Dataset ----
 print_msg_info(">>> Loading Dataset ...")
 # vpmat_vpsig <- readRDS("experiments/all-samples-sb-rna-seq-analysis/sb_vpmat_vpsig_npRef.rds")
-sig_list <- getSigList("data/regulators-lists/sig.csv")
+filepath_tfs_csv <- "data/regulators-lists/tfs.csv"
+filepath_cotfs_csv <- "data/regulators-lists/cotfs.csv"
+# filepath_sig_csv <- "data/regulators-lists/sig.csv"
+
+# sig_list <- getRegList(filepath_sig_csv)
+tfs <- getRegList(filepath_tfs_csv)#,col_names = F))
+cotfs <- getRegList(filepath_cotfs_csv)#,col_names = F))
+tfs_cotfs <- human_to_mouse(unlist(unique(c(tfs, cotfs))))
 
 ## Printing CIS hits on gene expression heatmap ----
 print_msg_info(">>> >> Printing CIS hits on gene expression heatmap")
@@ -992,7 +999,7 @@ saveCISGeneExpressionHeatmap(sb_data, cis_table.per_library)
 print_msg_info(">>> Printing VIPER Heatmap + CIS ...")
 printVIPERHeatmapPlusCIS(sb_data,
                          g_mat,
-                         sig_list,
+                         tfs_cotfs,
                          cis_table.per_library,
                          rna_seq_table,
                          pws_hms_list[["hallmarks_hm"]],
@@ -1011,7 +1018,7 @@ saveGSEAAnalysisOfNovelGeneSetAsPDF(sb_data)
 printVIPERHeatmapMinusCIS(
   sb_data,
   g_mat,
-  sig_list,
+  tfs_cotfs,
   cis_table.per_library,
   rna_seq_table,
   hallmarks_hm,
@@ -1022,7 +1029,7 @@ printVIPERHeatmapMinusCIS(
 printVIPERHeatmapMinusCIS(
   sb_data,
   g_mat,
-  sig_list,
+  tfs_cotfs,
   cis_table.per_library,
   rna_seq_table,
   hallmarks_hm,

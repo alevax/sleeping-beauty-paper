@@ -4,6 +4,7 @@
 .RData
 .Ruserdata
 sleeping-beauty-paper.Rproj
+Rplots.pdf
 
 # === Generated Output Directories ===
 # Experiments directory (created by main.sh pipeline)

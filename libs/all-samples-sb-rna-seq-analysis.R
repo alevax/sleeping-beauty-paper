@@ -758,7 +758,7 @@ known_nepc_markers <- c("Ezh2","Ascl1","Onecut2","Foxa2","Foxa1","Sox2","Ar","My
 ## Gathering CIS-assiciated genes ----
 print_msg_info(">>> Gathering CIS-assiciated genes")
 print_msg_warn(">>> *** This List is not derived from NE-only samples ***")
-cis_table <- read_csv(filepath_cis_all_nr_prostate_0_001_csv, skip = 1)
+cis_table <- read_csv(filepath_cis_all_nr_prostate_0_001_csv)#, skip = 1)
 cis_table <- gatherCISAssociatedGenes(cis_table)
 cis_genes <- cis_table$mouse_gene_name
 sb_data$cis_table <- cis_table
