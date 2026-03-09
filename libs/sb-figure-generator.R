@@ -471,6 +471,7 @@ getCISHeatmap <- function(g_mat, columns_dend){
 }
 getNESHeatmap <- function(mat, columns_dend){
   nes_hm <- Heatmap( mat,
+                     #col = colorRamp2(c(-7, 0, 7), c("deepskyblue3", "white", "brown3")),
                      col = colorRamp2(c(-3, 0, 3), c("deepskyblue3", "white", "brown3")),
                      heatmap_legend_param = list(color_bar = "continuous"),
                      show_heatmap_legend = FALSE, 
@@ -488,7 +489,8 @@ getNESHeatmap <- function(mat, columns_dend){
 }
 getNESHeatmapWithKnownMarkers <- function(mat_known, columns_dend){
   nes_known_hm <- Heatmap( mat_known,
-                           col = colorRamp2(c(-7, 0, 7), c("deepskyblue3", "white", "brown3")),
+                           #col = colorRamp2(c(-7, 0, 7), c("deepskyblue3", "white", "brown3")),
+                           col = colorRamp2(c(-3, 0, 3), c("deepskyblue3", "white", "brown3")),
                            heatmap_legend_param = list(color_bar = "continuous"),
                            show_heatmap_legend = FALSE, 
                            cluster_rows = FALSE,
